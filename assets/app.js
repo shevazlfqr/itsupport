@@ -22,6 +22,11 @@ const icon = (name, size = 18) => {
     image:
       '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',
     close: '<path d="m6 6 12 12M18 6 6 18"/>',
+    chart:
+      '<path d="M3 3v18h18"/><path d="M7 15v-4M12 17V8M17 17v-7"/>',
+    users:
+      '<path d="M17 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM22 20v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
   };
   return `<svg class="ui-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.activity}</svg>`;
 };
@@ -320,7 +325,7 @@ if (notification) {
   );
 }
 
-const navIcons = ["grid", "ticket", "plus"];
+const navIcons = ["grid", "ticket", "plus", "chart", "users"];
 document.querySelectorAll(".sidebar nav a i").forEach((element, index) => {
   element.innerHTML = icon(navIcons[index] || "ticket", 19);
 });
@@ -699,4 +704,45 @@ if (flashAlert || flashDataElement || pendingUserMessage) {
   toastLayer.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add("show"));
   setTimeout(dismiss, type === "error" ? 6500 : 4200);
+}
+
+/* ===== SLA countdown — menjaga badge tetap akurat tanpa reload ===== */
+const slaBadges = document.querySelectorAll(".sla-badge[data-sla-deadline]");
+if (slaBadges.length) {
+  const slaHours = { urgent: 4, high: 8, medium: 24, low: 72 };
+  const refreshSla = () => {
+    const now = Date.now();
+    slaBadges.forEach((badge) => {
+      const deadline = Date.parse(badge.dataset.slaDeadline);
+      if (Number.isNaN(deadline)) return;
+      const hours = slaHours[badge.dataset.slaPriority] || 24;
+      const diff = Math.round((deadline - now) / 1000);
+      let state = "ok";
+      let label = "";
+      if (diff <= 0) {
+        state = "breached";
+        label = "SLA Terlampaui";
+      } else if (diff <= hours * 3600 * 0.25) {
+        state = "warning";
+        const minutes = Math.ceil(diff / 60);
+        label =
+          minutes >= 60
+            ? `${Math.ceil(diff / 3600)} jam lagi`
+            : `${minutes} menit lagi`;
+      } else {
+        label = `SLA: ${Math.ceil(diff / 3600)} jam`;
+      }
+      badge.classList.remove("sla-ok", "sla-warning", "sla-breached");
+      badge.classList.add("sla-" + state);
+      const dot = badge.querySelector("i");
+      badge.textContent = label;
+      if (dot) badge.prepend(dot);
+      badge.title = `Batas SLA: ${new Date(deadline).toLocaleString("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })}`;
+    });
+  };
+  refreshSla();
+  setInterval(refreshSla, 30000);
 }

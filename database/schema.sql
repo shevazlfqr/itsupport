@@ -27,10 +27,12 @@ CREATE TABLE IF NOT EXISTS tickets (
     resolution_note TEXT NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
+    sla_deadline DATETIME NULL,
     PRIMARY KEY (id),
     KEY tickets_status_index (status),
     KEY tickets_requester_index (requester_id),
     KEY tickets_assignee_index (assignee_id),
+    KEY tickets_sla_index (sla_deadline),
     CONSTRAINT tickets_requester_fk FOREIGN KEY (requester_id) REFERENCES users (id),
     CONSTRAINT tickets_assignee_fk FOREIGN KEY (assignee_id) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

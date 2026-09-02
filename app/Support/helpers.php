@@ -20,7 +20,9 @@ function csrf(): string
 function verifyCsrf(): void
 {
     if (!hash_equals($_SESSION["csrf"] ?? "", $_POST["csrf"] ?? "")) {
-        http_response_code(419);
+        // 403 dipakai (bukan 419) karena Apache/mod_php mengubah kode non-standar
+        // seperti 419 menjadi 500, sehingga penyebab asli jadi menyesatkan di log.
+        http_response_code(403);
         exit("Sesi formulir kedaluwarsa. Muat ulang halaman.");
     }
 }
@@ -93,4 +95,105 @@ function relativeDate(string $date): string
         return floor($diff / 3600) . " jam lalu";
     }
     return floor($diff / 86400) . " hari lalu";
+}
+
+function checkSessionTimeout(): void
+{
+    $timeout = 1800; // 30 minutes in seconds
+
+    if (isset($_SESSION["last_activity"])) {
+        $elapsed = time() - $_SESSION["last_activity"];
+
+        if ($elapsed > $timeout) {
+            session_unset();
+            session_destroy();
+            session_start();
+            flash("error", "Sesi Anda telah berakhir karena tidak aktif. Silakan login kembali.");
+            redirect("index.php");
+        }
+    }
+
+    $_SESSION["last_activity"] = time();
+}
+
+function validateStrongPassword(string $password): array
+{
+    $errors = [];
+
+    if (mb_strlen($password) < 8) {
+        $errors[] = "minimal 8 karakter";
+    }
+
+    if (!preg_match('/[A-Z]/', $password)) {
+        $errors[] = "minimal 1 huruf besar";
+    }
+
+    if (!preg_match('/[a-z]/', $password)) {
+        $errors[] = "minimal 1 huruf kecil";
+    }
+
+    if (!preg_match('/[0-9]/', $password)) {
+        $errors[] = "minimal 1 angka";
+    }
+
+    if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+        $errors[] = "minimal 1 karakter spesial (!@#$%^&* dll)";
+    }
+
+    return $errors;
+}
+
+/**
+ * SLA deadlines in hours per priority
+ */
+function slaHours(): array
+{
+    return [
+        "urgent" => 4,
+        "high"   => 8,
+        "medium" => 24,
+        "low"    => 72,
+    ];
+}
+
+/**
+ * Calculate SLA deadline datetime string from created_at and priority
+ */
+function calcSlaDeadline(string $createdAt, string $priority): string
+{
+    $hours = slaHours()[$priority] ?? 24;
+    return date(DATE_ATOM, strtotime($createdAt) + $hours * 3600);
+}
+
+/**
+ * Return SLA status info for a ticket
+ * Returns: ['status' => 'ok'|'warning'|'breached', 'label' => '...', 'seconds_left' => int]
+ */
+function slaStatus(array $ticket): ?array
+{
+    if (empty($ticket["sla_deadline"])) return null;
+    // Closed/cancelled/completed tickets — SLA no longer tracked
+    if (in_array($ticket["status"], ["closed", "cancelled", "completed"], true)) return null;
+
+    $deadline = strtotime($ticket["sla_deadline"]);
+    $now      = time();
+    $diff     = $deadline - $now;
+
+    $hours = slaHours()[$ticket["priority"]] ?? 24;
+    $warningThreshold = $hours * 3600 * 0.25; // warn in last 25% of SLA time
+
+    if ($diff <= 0) {
+        return ["status" => "breached", "label" => "SLA Terlampaui", "seconds_left" => $diff];
+    }
+    if ($diff <= $warningThreshold) {
+        $mins = ceil($diff / 60);
+        if ($mins >= 60) {
+            $label = ceil($diff / 3600) . " jam lagi";
+        } else {
+            $label = $mins . " menit lagi";
+        }
+        return ["status" => "warning", "label" => $label, "seconds_left" => $diff];
+    }
+    $hrs = ceil($diff / 3600);
+    return ["status" => "ok", "label" => "SLA: " . $hrs . " jam", "seconds_left" => $diff];
 }

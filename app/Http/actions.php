@@ -10,6 +10,18 @@ verifyCsrf();
 if ($action === "login") {
     $email = strtolower(trim($_POST["email"] ?? ""));
     $password = $_POST["password"] ?? "";
+
+    // Rate limiting check
+    $limiter = rateLimiter();
+    $key = 'login:' . $email . ':' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+
+    if ($limiter->tooManyAttempts($key)) {
+        $seconds = $limiter->availableIn($key);
+        $minutes = ceil($seconds / 60);
+        flash("error", "Terlalu banyak percobaan login. Coba lagi dalam {$minutes} menit.");
+        redirect();
+    }
+
     $data = readData();
     $match = null;
     foreach ($data["users"] as $candidate) {
@@ -22,9 +34,21 @@ if ($action === "login") {
         }
     }
     if (!$match) {
-        flash("error", "Email atau password salah.");
+        // Increment failed login attempts
+        $limiter->hit($key);
+        $remaining = $limiter->remainingAttempts($key);
+
+        if ($remaining > 0) {
+            flash("error", "Email atau password salah. {$remaining} percobaan tersisa.");
+        } else {
+            flash("error", "Email atau password salah. Akun diblokir sementara.");
+        }
         redirect();
     }
+
+    // Clear rate limit on successful login
+    $limiter->clear($key);
+
     session_regenerate_id(true);
     $_SESSION["user_id"] = $match["id"];
     flash("success", "Selamat datang, " . $match["name"] . ".");
@@ -90,8 +114,11 @@ if (in_array($action, ["create_user", "update_user", "toggle_user"], true)) {
         }
     }
     if (($action === "create_user" || $password !== "") && mb_strlen($password) < 8) {
-        flash("error", "Password minimal 8 karakter.");
-        redirect("index.php?view=users");
+        $passwordErrors = validateStrongPassword($password);
+        if (!empty($passwordErrors)) {
+            flash("error", "Password tidak memenuhi syarat: " . implode(", ", $passwordErrors) . ".");
+            redirect("index.php?view=users");
+        }
     }
     if ($targetId === $user["id"] && $role !== "admin") {
         flash("error", "Admin tidak dapat menurunkan role akunnya sendiri.");
@@ -166,6 +193,7 @@ if ($action === "create_ticket") {
             "assignee_id" => null,
             "created_at" => $now,
             "updated_at" => $now,
+            "sla_deadline" => calcSlaDeadline($now, $priority),
         ];
         foreach ($attachments as $attachment) {
             $data["attachments"][] = [

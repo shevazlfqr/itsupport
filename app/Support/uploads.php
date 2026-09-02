@@ -45,18 +45,8 @@ function saveScreenshots(array $files): array
             $originalExtension = strtolower(
                 pathinfo($originalName, PATHINFO_EXTENSION),
             );
-            if (
-                !isset($extensions[$mime]) &&
-                in_array($originalExtension, ["heic", "heif"], true) &&
-                in_array(
-                    $mime,
-                    ["application/octet-stream", "application/x-empty"],
-                    true,
-                )
-            ) {
-                $mime =
-                    $originalExtension === "heic" ? "image/heic" : "image/heif";
-            }
+
+            // Strict MIME type validation - no fallback to extension
             if (!isset($extensions[$mime])) {
                 throw new RuntimeException(
                     "Lampiran hanya boleh berupa JPG, PNG, WebP, HEIC, atau HEIF.",

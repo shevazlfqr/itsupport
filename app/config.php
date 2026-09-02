@@ -1,13 +1,20 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . "/env.php";
+
+// Load environment variables
+loadEnv(__DIR__ . "/../.env");
+
 const BASE_PATH = __DIR__ . "/..";
 const UPLOAD_PATH = BASE_PATH . "/uploads";
-const DB_HOST = "127.0.0.1";
-const DB_PORT = 3306;
-const DB_NAME = "itsupport";
-const DB_USER = "root";
-const DB_PASSWORD = "";
+
+// Database configuration from environment variables
+define("DB_HOST", env("DB_HOST", "127.0.0.1"));
+define("DB_PORT", (int) env("DB_PORT", 3306));
+define("DB_NAME", env("DB_NAME", "itsupport"));
+define("DB_USER", env("DB_USER", "root"));
+define("DB_PASSWORD", env("DB_PASSWORD", ""));
 
 const STATUSES = [
     "new" => "Baru",

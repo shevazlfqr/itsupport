@@ -1,0 +1,29 @@
+# Environment variables
+.env
+.env.local
+
+# Session files
+/storage/sessions/*
+!/storage/sessions/.gitkeep
+
+# Rate limiter state
+/storage/rate_limits/*
+!/storage/rate_limits/.gitkeep
+
+# Uploaded files
+/uploads/*
+!/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log

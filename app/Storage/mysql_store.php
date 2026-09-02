@@ -29,6 +29,10 @@ function normalizeData(array &$data): void
     foreach ($data["tickets"] as &$ticket) {
         if (isset($legacyStatuses[$ticket["status"]])) $ticket["status"] = $legacyStatuses[$ticket["status"]];
         $ticket["resolution_note"] = $ticket["resolution_note"] ?? "";
+        // Backfill SLA deadline for tickets created before SLA tracking existed
+        if (empty($ticket["sla_deadline"])) {
+            $ticket["sla_deadline"] = calcSlaDeadline($ticket["created_at"], $ticket["priority"]);
+        }
     }
     unset($ticket);
 }
@@ -38,7 +42,7 @@ function readData(): array
     $pdo = db();
     $data = [
         "users" => $pdo->query("SELECT id, name, email, password, role, department, job_title, active FROM users ORDER BY id")->fetchAll(),
-        "tickets" => $pdo->query("SELECT id, subject, description, category, priority, status, requester_id, assignee_id, resolution_note, created_at, updated_at FROM tickets ORDER BY id")->fetchAll(),
+        "tickets" => $pdo->query("SELECT id, subject, description, category, priority, status, requester_id, assignee_id, resolution_note, created_at, updated_at, sla_deadline FROM tickets ORDER BY id")->fetchAll(),
         "comments" => $pdo->query("SELECT id, ticket_id, user_id, message, created_at FROM comments ORDER BY id")->fetchAll(),
         "activities" => $pdo->query("SELECT id, ticket_id, user_id, message, created_at FROM activities ORDER BY id")->fetchAll(),
         "attachments" => $pdo->query("SELECT id, ticket_id, user_id, stored_name, original_name, mime, size, created_at FROM attachments ORDER BY id")->fetchAll(),
@@ -90,9 +94,9 @@ function persistData(PDO $pdo, array $data): void
         $statement->execute([$user["id"], $user["name"], $user["email"], $user["password"], $user["role"], $user["department"], $user["job_title"], $user["active"] ? 1 : 0]);
     }
 
-    $statement = $pdo->prepare("INSERT INTO tickets (id, subject, description, category, priority, status, requester_id, assignee_id, resolution_note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $statement = $pdo->prepare("INSERT INTO tickets (id, subject, description, category, priority, status, requester_id, assignee_id, resolution_note, created_at, updated_at, sla_deadline) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     foreach ($data["tickets"] as $ticket) {
-        $statement->execute([$ticket["id"], $ticket["subject"], $ticket["description"], $ticket["category"], $ticket["priority"], $ticket["status"], $ticket["requester_id"], $ticket["assignee_id"], $ticket["resolution_note"] ?? "", mysqlDate($ticket["created_at"]), mysqlDate($ticket["updated_at"])]);
+        $statement->execute([$ticket["id"], $ticket["subject"], $ticket["description"], $ticket["category"], $ticket["priority"], $ticket["status"], $ticket["requester_id"], $ticket["assignee_id"], $ticket["resolution_note"] ?? "", mysqlDate($ticket["created_at"]), mysqlDate($ticket["updated_at"]), isset($ticket["sla_deadline"]) ? mysqlDate($ticket["sla_deadline"]) : null]);
     }
 
     $statement = $pdo->prepare("INSERT INTO comments (id, ticket_id, user_id, message, created_at) VALUES (?, ?, ?, ?, ?)");
