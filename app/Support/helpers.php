@@ -172,7 +172,7 @@ function calcSlaDeadline(string $createdAt, string $priority): string
 function slaStatus(array $ticket): ?array
 {
     if (empty($ticket["sla_deadline"])) return null;
-    // Closed/cancelled/completed tickets — SLA no longer tracked
+    // Closed/cancelled/completed tickets - SLA no longer tracked
     if (in_array($ticket["status"], ["closed", "cancelled", "completed"], true)) return null;
 
     $deadline = strtotime($ticket["sla_deadline"]);

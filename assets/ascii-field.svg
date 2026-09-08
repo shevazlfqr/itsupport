@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="288" viewBox="0 0 480 288">
+  <g fill="none" stroke="#5a94e9" stroke-opacity=".18" shape-rendering="crispEdges">
+    <path d="M0 48H480M0 144H480M0 240H480M48 0V288M240 0V288M432 0V288"/>
+    <path d="M0 192H96V96H192V48H288V144H384V240H480M0 240H48V144H144V192H240V96H336V48H480" stroke-opacity=".3"/>
+    <path d="M42 48H54M48 42V54M234 144H246M240 138V150M426 240H438M432 234V246" stroke-opacity=".35"/>
+  </g>
+  <g fill="#8cb8ff" fill-opacity=".28" font-family="Consolas, monospace" font-size="12" xml:space="preserve">
+    <text x="12" y="22">. . . : : + + # # + : . .             . . :</text>
+    <text x="12" y="46">. . : + # # # + : .                 . : + #</text>
+    <text x="12" y="70">. : + # # + : .         . .       . : + # #</text>
+    <text x="12" y="94">: + # + : .           . : +     . : # # + :</text>
+    <text x="12" y="118">+ # + : .       . . : + # + : . : + # + : .</text>
+    <text x="12" y="142"># + : .      . : + # # # + : . . : + : . .</text>
+    <text x="12" y="166">+ : .      . : + # # + : .       . : . . .</text>
+    <text x="12" y="190">: .      . : + # + : .           . . . : +</text>
+    <text x="12" y="214">.      . : + # + : .             . . : + #</text>
+    <text x="12" y="238">     . : + # # + : .           . . : + # #</text>
+    <text x="12" y="262">   . : + # # + : .           . : + # # + :</text>
+    <text x="12" y="286"> . : + # + : .             . : + # + : . .</text>
+  </g>
+</svg>

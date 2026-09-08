@@ -1,8 +1,23 @@
--- SLA Tracking Migration
--- Run this script to add SLA deadline column to tickets table
+-- Historical SLA migration for databases created before schema.sql included
+-- the SLA column and index. schema.sql is the baseline for new installations.
+-- This file is safe to run when the column or index already exists.
 
-ALTER TABLE tickets
-    ADD COLUMN sla_deadline DATETIME NULL AFTER updated_at;
+USE itsupport;
+
+SET @add_sla_column = IF(
+    EXISTS(
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = DATABASE()
+          AND table_name = 'tickets'
+          AND column_name = 'sla_deadline'
+    ),
+    'SELECT 1',
+    'ALTER TABLE tickets ADD COLUMN sla_deadline DATETIME NULL AFTER updated_at'
+);
+PREPARE add_sla_column_stmt FROM @add_sla_column;
+EXECUTE add_sla_column_stmt;
+DEALLOCATE PREPARE add_sla_column_stmt;
 
 -- SLA Deadlines by Priority (from ticket created_at):
 -- urgent: 4 hours
@@ -20,8 +35,18 @@ UPDATE tickets SET sla_deadline = CASE
 END
 WHERE sla_deadline IS NULL;
 
--- Index untuk query/urutan berdasarkan deadline SLA (menyamakan dengan schema.sql).
--- Jalankan hanya jika index belum ada:
---   SHOW INDEX FROM tickets WHERE Key_name = 'tickets_sla_index';
-ALTER TABLE tickets
-    ADD INDEX tickets_sla_index (sla_deadline);
+-- Index untuk query dan urutan berdasarkan deadline SLA.
+SET @add_sla_index = IF(
+    EXISTS(
+        SELECT 1
+        FROM information_schema.statistics
+        WHERE table_schema = DATABASE()
+          AND table_name = 'tickets'
+          AND index_name = 'tickets_sla_index'
+    ),
+    'SELECT 1',
+    'ALTER TABLE tickets ADD INDEX tickets_sla_index (sla_deadline)'
+);
+PREPARE add_sla_index_stmt FROM @add_sla_index;
+EXECUTE add_sla_index_stmt;
+DEALLOCATE PREPARE add_sla_index_stmt;

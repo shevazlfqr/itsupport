@@ -4,22 +4,30 @@ Portal ticketing internal berbasis PHP native dan MySQL. Karyawan membuat serta 
 
 ## Kebutuhan sistem
 
-- XAMPP dengan Apache dan MySQL/MariaDB aktif
+- Apache dan MySQL/MariaDB aktif melalui Laragon, XAMPP, atau stack lokal lain
 - PHP 7.4 atau lebih baru
 - Ekstensi PHP `PDO` dan `pdo_mysql`
 - Browser modern
 
 ## Menjalankan aplikasi
 
-1. Letakkan proyek di `C:\xampp\htdocs\itsupport`.
-2. Jalankan Apache dan MySQL melalui XAMPP Control Panel.
-3. Buat schema database:
+1. Letakkan proyek di document root stack lokal. Contoh:
+   - Laragon: `C:\laragon\www\itsupport`
+   - XAMPP: `C:\xampp\htdocs\itsupport`
+2. Salin `.env.example` menjadi `.env`, lalu sesuaikan koneksi database lokal.
+3. Jalankan Apache dan MySQL/MariaDB.
+4. Buat database dari `database/schema.sql`. File ini adalah baseline untuk
+   instalasi baru:
 
 ```powershell
-& 'C:\xampp\mysql\bin\mysql.exe' -u root -e 'SOURCE C:/xampp/htdocs/itsupport/database/schema.sql'
+Get-Content .\database\schema.sql | & '<mysql-bin>\mysql.exe' -u root -p
 ```
 
-4. Buka `http://localhost/itsupport/`.
+Untuk database lama yang dibuat sebelum kolom SLA masuk ke schema, jalankan
+`database/migration_sla.sql` satu kali. Migration tersebut aman jika kolom dan
+index SLA sudah ada.
+
+5. Buka `http://localhost/itsupport/`.
 
 Konfigurasi koneksi berada di `app/config.php`. Konfigurasi lokal saat ini:
 
@@ -31,14 +39,14 @@ Konfigurasi koneksi berada di `app/config.php`. Konfigurasi lokal saat ini:
 | User | `root` |
 | Password | Kosong |
 
-## Akun Admin saat ini
+## Akun admin lokal
 
-| Nama | Email | Password | Role |
-|---|---|---|---|
-| Administrator | `admin@gmail.com` | `admin123` | Admin |
-| Sheva Zulfiqaar | `shevazulfiqaar@gmail.com` | `sheva123` | Admin |
+Kredensial admin tidak disimpan di repository. Gunakan password yang dibuat saat
+provisioning database lokal dan simpan di password manager atau secret store
+lokal. Jangan menaruh password di README, source code, screenshot, atau commit.
 
-Tidak tersedia registrasi publik. Admin menambahkan akun Karyawan, Tim IT, atau Admin melalui menu **Kelola User**.
+Tidak tersedia registrasi publik. Admin menambahkan akun Karyawan, Tim IT, atau
+Admin melalui menu **Kelola User**.
 
 ## Fitur utama
 
@@ -105,19 +113,30 @@ itsupport/
 │   │   └── mysql_store.php   # Repository PDO MySQL
 │   ├── Support/
 │   │   ├── helpers.php       # Helper umum, CSRF, dan otorisasi
-│   │   └── uploads.php       # Validasi dan penyimpanan lampiran
-│   ├── bootstrap.php         # Inisialisasi aplikasi dan session
-│   └── config.php            # Konfigurasi database dan domain
+│   │   ├── csv_export.php     # Export ticket ke CSV
+│   │   ├── rate_limiter.php   # Pembatasan percobaan login
+│   │   └── uploads.php        # Validasi dan penyimpanan lampiran
+│   ├── bootstrap.php          # Inisialisasi aplikasi dan session
+│   ├── config.php             # Konfigurasi database dan domain
+│   └── env.php                # Loader environment lokal
 ├── assets/
-│   ├── app.js                # Seluruh interaksi antarmuka
-│   └── styles.css            # Seluruh stylesheet aplikasi
+│   ├── analytics.js           # Inisialisasi chart analytics
+│   ├── app.js                 # Seluruh interaksi antarmuka
+│   ├── ascii-field.svg        # Motif ASCII statis
+│   ├── styles.css             # Stylesheet aplikasi
+│   └── vendor/
+│       └── chart.umd.min.js   # Chart.js vendored, versi dan lisensi di header
 ├── database/
-│   └── schema.sql            # Struktur tabel dan foreign key
+│   ├── schema.sql             # Baseline schema untuk instalasi baru
+│   └── migration_sla.sql      # Migration historis yang idempotent
 ├── storage/
-│   └── sessions/             # Session PHP runtime
-├── uploads/                  # Lampiran tiket runtime
-├── index.php                 # Front controller dan template
-└── README.md
+│   ├── sessions/              # Session PHP runtime, tidak dilacak Git
+│   └── rate_limits/           # State rate limiter, tidak dilacak Git
+├── uploads/                   # Lampiran tiket runtime, tidak dilacak Git
+├── anti-slop/                 # Audit dan catatan desain, bukan runtime app
+├── index.php                  # Front controller dan template
+├── DESIGN.md                  # Arah visual dan kontrak UI
+└── README.md                  # Setup dan dokumentasi proyek
 ```
 
 ## Penyimpanan data

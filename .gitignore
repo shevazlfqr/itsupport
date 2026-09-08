@@ -27,3 +27,6 @@ desktop.ini
 
 # Logs
 *.log
+
+# Local visual QA captures may contain ticket and account data.
+/anti-slop/visual-checks/
