@@ -1,171 +1,94 @@
 # Helpdesk IT Support
 
-Portal ticketing internal berbasis PHP native dan MySQL. Karyawan membuat serta memantau tiket, sedangkan Tim IT menangani tiket dan Admin mengelola operasional serta akun pengguna.
+Portal ticketing internal untuk pelaporan kendala IT, penugasan teknisi, percakapan, SLA, dan pengelolaan akun.
 
-## Kebutuhan sistem
+## Stack dan kebutuhan
 
-- Apache dan MySQL/MariaDB aktif melalui Laragon, XAMPP, atau stack lokal lain
-- PHP 7.4 atau lebih baru
-- Ekstensi PHP `PDO` dan `pdo_mysql`
-- Browser modern
+- PHP 8.3 atau lebih baru
+- Laravel 13
+- Composer 2.x
+- MySQL atau MariaDB
+- Ekstensi PHP `pdo_mysql`, `mbstring`, `fileinfo`, `openssl`, dan `xml`
 
-## Menjalankan aplikasi
+Laravel 13 membutuhkan PHP minimal 8.3. Lihat [catatan rilis resmi Laravel](https://laravel.com/framework/docs/13.x/releases) untuk matriks dukungan versi.
 
-1. Letakkan proyek di document root stack lokal. Contoh:
-   - Laragon: `C:\laragon\www\itsupport`
-   - XAMPP: `C:\xampp\htdocs\itsupport`
-2. Salin `.env.example` menjadi `.env`, lalu sesuaikan koneksi database lokal.
-3. Jalankan Apache dan MySQL/MariaDB.
-4. Buat database dari `database/schema.sql`. File ini adalah baseline untuk
-   instalasi baru:
+## Menjalankan di Laragon
 
-```powershell
-Get-Content .\database\schema.sql | & '<mysql-bin>\mysql.exe' -u root -p
-```
+1. Pastikan Laragon memilih PHP 8.3. Pada instalasi ini executable yang tervalidasi adalah `C:\laragon\bin\php\PHP-8.3.30\php.exe`.
+2. Jika `.env` belum ada, salin `.env.example` menjadi `.env`, lalu sesuaikan `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD`.
+3. Pasang dependency dan siapkan aplikasi:
 
-Untuk database lama yang dibuat sebelum kolom SLA masuk ke schema, jalankan
-`database/migration_sla.sql` satu kali. Migration tersebut aman jika kolom dan
-index SLA sudah ada.
+   ```powershell
+   if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+   $env:Path = 'C:\laragon\bin\php\PHP-8.3.30;' + $env:Path
+   composer install
+   $php = 'C:\laragon\bin\php\PHP-8.3.30\php.exe'
+   if (-not (Select-String -Path .env -Pattern '^APP_KEY=.+')) { & $php artisan key:generate }
+   & $php artisan migrate
+   & $php artisan storage:link
+   ```
 
-5. Buka `http://localhost/itsupport/`.
+   Migration helpdesk bersifat guarded: tabel lama tidak dihapus dan kolom SLA ditambahkan hanya jika belum ada.
+4. Arahkan DocumentRoot virtual host Laragon ke folder `public`, yaitu `C:\laragon\www\itsupport\public`.
+5. Alternatif untuk development cepat:
 
-Konfigurasi koneksi berada di `app/config.php`. Konfigurasi lokal saat ini:
+   ```powershell
+   & 'C:\laragon\bin\php\PHP-8.3.30\php.exe' artisan serve
+   ```
 
-| Konfigurasi | Nilai |
-|---|---|
-| Host | `127.0.0.1` |
-| Port | `3306` |
-| Database | `itsupport` |
-| User | `root` |
-| Password | Kosong |
+Jika perintah `php` atau `composer` belum masuk PATH, jalankan executable PHP 8.3 yang dipilih Laragon secara eksplisit. Jangan memakai `C:\laragon\bin\php\php.ini` yang masih menunjuk ke ekstensi XAMPP; gunakan `php.ini` milik versi PHP aktif.
 
-## Akun admin lokal
+## Akun dan data lokal
 
-Kredensial admin tidak disimpan di repository. Gunakan password yang dibuat saat
-provisioning database lokal dan simpan di password manager atau secret store
-lokal. Jangan menaruh password di README, source code, screenshot, atau commit.
+Data pengguna lama tetap berada di database `itsupport`. Password tidak disimpan di repository. Gunakan password yang sudah dibuat saat provisioning lokal atau buat akun baru melalui menu admin.
 
-Tidak tersedia registrasi publik. Admin menambahkan akun Karyawan, Tim IT, atau
-Admin melalui menu **Kelola User**.
+Migration tidak menjalankan reset, seed, atau penghapusan data. Backup native hasil pemindahan tersedia di luar project bila diperlukan.
 
 ## Fitur utama
 
-### Ticketing
+- Ticket baru dengan kategori, prioritas, deskripsi, SLA, dan lampiran JPG, PNG, WebP, HEIC, atau HEIF.
+- Penugasan dan perubahan status oleh Tim IT atau Admin.
+- Komentar, aktivitas, catatan penyelesaian, konfirmasi requester, dan status read-only untuk ticket final.
+- Filter, export CSV, ringkasan analitik, polling notifikasi, serta light dan dark mode.
+- Pengelolaan akun oleh Admin dengan validasi password, perubahan role, dan aktivasi akun.
+- Layout responsif dengan skip link, fokus keyboard, label form, dan header keamanan HTTP.
 
-- Membuat dan memantau tiket bantuan IT
-- Kategori, prioritas, deskripsi, dan lampiran
-- Penugasan oleh Admin atau diambil langsung oleh Tim IT
-- Percakapan dan riwayat aktivitas dengan tanggal serta jam
-- Catatan penyelesaian sebelum tiket dinyatakan selesai
-- Filter tiket dan filter **Ticket Saya** untuk teknisi
-
-Status tiket yang digunakan:
-
-1. Baru
-2. Ditugaskan
-3. Sedang dikerjakan
-4. Selesai
-5. Ditutup
-6. Dibatalkan
-
-Status final seperti **Ditutup** dan **Dibatalkan** bersifat read-only. Tiket **Selesai** menunggu konfirmasi requester untuk ditutup atau dibuka kembali.
-
-### Kelola pengguna
-
-Admin dapat:
-
-- menambahkan akun satu per satu;
-- mengubah nama, email, role, jabatan, dan divisi;
-- mereset password;
-- mengaktifkan atau menonaktifkan akun;
-- memfilter akun berdasarkan status aktif dan nonaktif.
-
-Akun dinonaktifkan tanpa dihapus permanen agar histori tiket tetap konsisten. Admin tidak dapat menonaktifkan atau menurunkan role akunnya sendiri.
-
-### Lampiran
-
-- Format: JPG, PNG, WebP, HEIC, dan HEIF
-- Maksimal 5 file per tiket
-- Maksimal 10 MB per file
-- Preview gambar sebelum tiket dikirim
-- File HEIC/HEIF ditampilkan sebagai file jika browser tidak mendukung preview
-
-### Dashboard dan notifikasi
-
-- Ringkasan distribusi status tiket
-- Klasifikasi masalah berdasarkan kategori
-- Distribusi beban kerja teknisi
-- Aktivitas terbaru
-- Notifikasi komentar dan perubahan tiket
-- Popup hasil tambah, edit, dan perubahan data pengguna
-- Light mode dan dark mode
-- Layout responsif untuk desktop dan mobile
-
-## Struktur proyek
+## Struktur project
 
 ```text
 itsupport/
-├── app/
-│   ├── Http/
-│   │   ├── actions.php       # Handler form dan aturan bisnis
-│   │   └── updates_api.php   # Endpoint polling notifikasi
-│   ├── Storage/
-│   │   └── mysql_store.php   # Repository PDO MySQL
-│   ├── Support/
-│   │   ├── helpers.php       # Helper umum, CSRF, dan otorisasi
-│   │   ├── csv_export.php     # Export ticket ke CSV
-│   │   ├── rate_limiter.php   # Pembatasan percobaan login
-│   │   └── uploads.php        # Validasi dan penyimpanan lampiran
-│   ├── bootstrap.php          # Inisialisasi aplikasi dan session
-│   ├── config.php             # Konfigurasi database dan domain
-│   └── env.php                # Loader environment lokal
-├── assets/
-│   ├── analytics.js           # Inisialisasi chart analytics
-│   ├── app.js                 # Seluruh interaksi antarmuka
-│   ├── ascii-field.svg        # Motif ASCII statis
-│   ├── styles.css             # Stylesheet aplikasi
-│   └── vendor/
-│       └── chart.umd.min.js   # Chart.js vendored, versi dan lisensi di header
-├── database/
-│   ├── schema.sql             # Baseline schema untuk instalasi baru
-│   └── migration_sla.sql      # Migration historis yang idempotent
-├── storage/
-│   ├── sessions/              # Session PHP runtime, tidak dilacak Git
-│   └── rate_limits/           # State rate limiter, tidak dilacak Git
-├── uploads/                   # Lampiran tiket runtime, tidak dilacak Git
-├── anti-slop/                 # Audit dan catatan desain, bukan runtime app
-├── index.php                  # Front controller dan template
-├── DESIGN.md                  # Arah visual dan kontrak UI
-└── README.md                  # Setup dan dokumentasi proyek
+|-- app/
+|   |-- Http/Controllers/       # Endpoint web dan adapter kompatibilitas
+|   |-- Http/Middleware/        # Role, CSRF legacy, dan security headers
+|   |-- Http/Requests/          # Validasi input per use case
+|   |-- Models/                 # Model Eloquent untuk tabel helpdesk
+|   |-- Services/               # Transaksi ticket/user dan data dashboard
+|   `-- Support/legacy.php      # Adapter schema lama untuk boundary kompatibilitas
+|-- bootstrap/                  # Bootstrap aplikasi Laravel
+|-- config/helpdesk.php         # Status, role, kategori, SLA, dan batas upload
+|-- database/migrations/        # Migration guarded untuk schema existing
+|-- public/assets/              # CSS, JavaScript, SVG, dan Chart.js
+|-- resources/views/            # Layout, halaman auth, dan partial dashboard
+|   |-- layouts/app.blade.php
+|   `-- dashboard/partials/     # Sidebar, topbar, flash, dan section dashboard
+|-- routes/web.php              # Route canonical dan route kompatibilitas index.php
+|-- storage/app/public/uploads/ # Lampiran yang dapat diakses melalui storage link
+|-- DESIGN.md                   # Arah visual dan kontrak UI
+`-- README.md                   # Panduan ini
 ```
 
-## Penyimpanan data
+Route `/index.php` dan POST legacy dipertahankan sementara agar bookmark atau form lama tidak langsung rusak. Feature baru sebaiknya memakai named route Laravel, FormRequest, controller, service, dan Eloquent model.
 
-Seluruh data aplikasi disimpan di MySQL:
+Data dashboard disiapkan oleh `App\Services\DashboardViewData`, lalu dirender melalui layout `resources/views/layouts/app.blade.php` dan partial di `resources/views/dashboard/partials/`.
 
-- `users`
-- `tickets`
-- `comments`
-- `activities`
-- `attachments`
-- `ticket_reads`
+Salinan sumber native sebelum migrasi dipindahkan ke `C:\laragon\www\itsupport-native-backup-20260912`, di luar project agar tidak ikut menjadi source runtime.
 
-Runtime tidak menggunakan JSON. Operasi perubahan data dijalankan melalui PDO dan transaksi database.
+## Perintah pemeriksaan
 
-## Keamanan
+```powershell
+php artisan route:list
+php artisan view:cache
+php artisan test
+```
 
-- Password disimpan menggunakan `password_hash()`.
-- Form perubahan data dilindungi CSRF token.
-- Hak akses diperiksa kembali di backend.
-- Akun nonaktif tidak dapat login.
-- Upload divalidasi berdasarkan format, MIME type, jumlah, dan ukuran.
-
-Untuk penggunaan produksi:
-
-- ganti seluruh password awal;
-- gunakan akun MySQL khusus dengan password kuat;
-- pindahkan kredensial database ke environment variables;
-- aktifkan HTTPS;
-- nonaktifkan tampilan error PHP;
-- lakukan backup database dan folder `uploads` secara berkala;
-- integrasikan autentikasi kantor atau SSO jika diperlukan.
+Sebelum deploy, aktifkan HTTPS, gunakan akun database khusus dengan password kuat, matikan `APP_DEBUG`, dan jadwalkan backup database serta `storage/app/public/uploads`.

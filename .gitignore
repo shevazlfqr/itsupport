@@ -2,17 +2,9 @@
 .env
 .env.local
 
-# Session files
-/storage/sessions/*
-!/storage/sessions/.gitkeep
-
-# Rate limiter state
-/storage/rate_limits/*
-!/storage/rate_limits/.gitkeep
-
-# Uploaded files
-/uploads/*
-!/uploads/.gitkeep
+# Laravel runtime files
+/storage/app/public/uploads/*
+!/storage/app/public/uploads/.htaccess
 
 # IDE
 .vscode/
@@ -25,8 +17,16 @@
 Thumbs.db
 desktop.ini
 
-# Logs
 *.log
 
 # Local visual QA captures may contain ticket and account data.
 /anti-slop/visual-checks/
+
+# Laravel runtime and generated assets
+/vendor/
+/node_modules/
+/public/build/
+/public/hot
+/public/storage
+/storage/*.key
+.phpunit.result.cache
