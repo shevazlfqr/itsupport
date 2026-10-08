@@ -13,8 +13,9 @@
     <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.svg') }}">
     <title>@yield('title', 'Helpdesk IT Support')</title>
     <script>document.documentElement.dataset.theme=localStorage.getItem('helpdesk-theme')||'light'</script>
-    <link rel="stylesheet" href="{{ asset('assets/styles.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/pwa.css') }}">
+    @php($assetVersion = '20261008.10')
+    <link rel="stylesheet" href="{{ asset('assets/styles.css') }}?v={{ $assetVersion }}">
+    <link rel="stylesheet" href="{{ asset('assets/pwa.css') }}?v={{ $assetVersion }}">
     @stack('head')
 </head>
 <body data-updates-endpoint="{{ route('updates') }}">
@@ -39,8 +40,8 @@
             <button type="button" data-pwa-dismiss aria-label="Tutup pemberitahuan">&times;</button>
         </div>
     </aside>
-    <script src="{{ asset('assets/app.js') }}"></script>
-    <script src="{{ asset('assets/pwa.js') }}"></script>
+    <script src="{{ asset('assets/app.js') }}?v={{ $assetVersion }}"></script>
+    <script src="{{ asset('assets/pwa.js') }}?v={{ $assetVersion }}"></script>
     @stack('scripts')
 </body>
 </html>

@@ -7398,6 +7398,23 @@ form[aria-busy="true"] button[type="submit"] {
 
 /* The upload action must fit beside the dropzone padding on narrow screens. */
 @media (max-width: 650px) {
+  .upload-dropzone {
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+  }
+
+  .upload-icon {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .upload-copy {
+    grid-column: 2;
+    min-width: 0;
+  }
+
   .upload-heading {
     align-items: flex-start;
     flex-wrap: wrap;
@@ -7419,9 +7436,10 @@ form[aria-busy="true"] button[type="submit"] {
   }
 
   .upload-button {
-    flex: 0 0 calc(100% - 60px);
-    width: auto;
+    grid-column: 2;
+    flex: none;
+    width: 100% !important;
     min-width: 0;
-    margin-left: 60px;
+    margin: 0;
   }
 }

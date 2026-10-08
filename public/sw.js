@@ -1,4 +1,4 @@
-const CACHE_VERSION = "itsupport-static-v9";
+const CACHE_VERSION = "itsupport-static-v10";
 const STATIC_ASSETS = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -47,7 +47,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (isStaticAsset(url.pathname)) {
     event.respondWith(
-      caches.match(request).then((cached) => {
+      caches.match(request, { ignoreSearch: true }).then((cached) => {
         if (cached) return cached;
         return fetch(request).then((response) => {
           if (!response.ok) return response;
