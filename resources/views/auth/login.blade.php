@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.svg') }}">
     <title>Helpdesk IT Support</title>
     <script>document.documentElement.dataset.theme = localStorage.getItem('helpdesk-theme') || 'light'</script>
-    @php($assetVersion = '20261008.10')
+    @php($assetVersion = '20261008.14')
     <link rel="stylesheet" href="{{ asset('assets/styles.css') }}?v={{ $assetVersion }}">
     <link rel="stylesheet" href="{{ asset('assets/pwa.css') }}?v={{ $assetVersion }}">
 </head>

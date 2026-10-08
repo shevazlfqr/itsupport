@@ -7243,14 +7243,26 @@ form[aria-busy="true"] button[type="submit"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 56px;
+    width: 44px;
+    min-width: 44px;
     min-height: 44px !important;
     height: 44px;
-    padding: 0 10px;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1;
-    flex: 0 0 56px;
+    padding: 0;
+    flex: 0 0 44px;
+  }
+
+  .menu-toggle-icon {
+    display: grid;
+    gap: 4px;
+    width: 18px;
+  }
+
+  .menu-toggle-icon i {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
   }
 
   .theme-toggle,
@@ -7268,8 +7280,10 @@ form[aria-busy="true"] button[type="submit"] {
   }
 
   .topbar .btn.primary.compact {
+    position: relative;
     gap: 0;
     font-size: 0;
+    line-height: 0;
     max-width: 44px;
     text-indent: 0;
     white-space: nowrap;
@@ -7284,6 +7298,13 @@ form[aria-busy="true"] button[type="submit"] {
     margin: 0;
     justify-self: center;
     align-self: center;
+  }
+
+  .topbar .btn.primary.compact .ui-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -7441,5 +7462,25 @@ form[aria-busy="true"] button[type="submit"] {
     width: 100% !important;
     min-width: 0;
     margin: 0;
+  }
+}
+
+.table-wrap[hidden] {
+  display: none !important;
+}
+
+.table-empty-state {
+  min-width: 0;
+  margin: 0 12px 12px;
+}
+
+.table-empty-state .empty-state {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .table-empty-state {
+    margin: 0 10px 10px;
   }
 }

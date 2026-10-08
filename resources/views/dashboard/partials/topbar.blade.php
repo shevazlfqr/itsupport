@@ -1,5 +1,5 @@
 <header class="topbar">
-    <button type="button" class="menu-toggle" aria-label="Menu navigasi" aria-expanded="false" aria-controls="app-sidebar">Menu</button>
+    <button type="button" class="menu-toggle" aria-label="Menu navigasi" aria-expanded="false" aria-controls="app-sidebar"><span class="menu-toggle-icon" aria-hidden="true"><i></i><i></i><i></i></span></button>
     <div class="crumb">IT Support <span>/</span> {{ e($crumb) }}</div>
     <div class="top-actions">
         <div class="notification">

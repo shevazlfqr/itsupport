@@ -1062,6 +1062,17 @@ document.querySelectorAll("form:not(.filters)").forEach((form) => {
 
 const ticketTable = document.querySelector(".table-card table");
 if (ticketTable) {
+  const tableWrap = ticketTable.closest(".table-wrap");
+  const emptyState = ticketTable.querySelector("tbody td[colspan] .empty-state");
+  if (tableWrap && emptyState) {
+    const emptyRow = emptyState.closest("tr");
+    const emptyShell = document.createElement("div");
+    emptyShell.className = "table-empty-state";
+    emptyShell.appendChild(emptyState);
+    tableWrap.hidden = true;
+    tableWrap.insertAdjacentElement("afterend", emptyShell);
+    emptyRow?.remove();
+  }
   const tableLabels = [...ticketTable.querySelectorAll("thead th")].map((header) => header.textContent.trim());
   ticketTable.classList.add("responsive-ticket-table");
   ticketTable.querySelectorAll("tbody tr").forEach((row) => {
