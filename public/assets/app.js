@@ -753,6 +753,9 @@ const bellIcon = document.querySelector(".notification-button>span");
 if (bellIcon) bellIcon.innerHTML = icon("bell", 18);
 const searchIcon = document.querySelector(".search > span");
 if (searchIcon) searchIcon.innerHTML = icon("search", 17);
+document.querySelectorAll(".table-wrap > table").forEach((table) => {
+  table.classList.add("responsive-ticket-table");
+});
 document.querySelectorAll(".btn").forEach((button) => {
   const text = button.textContent.trim().toLowerCase();
   let name = null;

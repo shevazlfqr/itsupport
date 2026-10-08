@@ -7279,3 +7279,75 @@ form[aria-busy="true"] button[type="submit"] {
     margin: 0;
   }
 }
+
+/* Empty ticket states must not inherit the desktop table's 800px minimum. */
+@media (max-width: 700px) {
+  .table-card .table-wrap > table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table-card .table-wrap > table thead {
+    display: none;
+  }
+
+  .table-card .table-wrap > table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .table-card .table-wrap > table tbody tr {
+    display: block;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-surface);
+    background: var(--panel-raised);
+  }
+
+  .table-card .table-wrap > table tbody td {
+    display: grid;
+    grid-template-columns: minmax(76px, 0.42fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+  }
+
+  .table-card .table-wrap > table tbody td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .table-card .table-wrap > table tbody td:first-child,
+  .table-card .table-wrap > table tbody td[colspan] {
+    display: block;
+    border-bottom: 0;
+  }
+
+  .table-card .table-wrap > table tbody td:first-child {
+    padding-top: 4px;
+  }
+
+  .table-card .table-wrap > table tbody td:first-child::before,
+  .table-card .table-wrap > table tbody td:last-child::before,
+  .table-card .table-wrap > table tbody td[colspan]::before {
+    display: none;
+  }
+
+  .table-card .table-wrap > table tbody td:last-child {
+    display: flex;
+    justify-content: flex-end;
+    padding-bottom: 4px;
+  }
+
+  .table-card .table-wrap > table tbody td[colspan] .empty-state {
+    width: 100%;
+    min-width: 0;
+  }
+}
