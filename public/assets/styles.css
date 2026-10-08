@@ -7395,3 +7395,33 @@ form[aria-busy="true"] button[type="submit"] {
     min-width: 0;
   }
 }
+
+/* The upload action must fit beside the dropzone padding on narrow screens. */
+@media (max-width: 650px) {
+  .upload-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .upload-heading > div {
+    flex: 1 1 170px;
+    min-width: 0;
+  }
+
+  .upload-heading strong {
+    overflow-wrap: anywhere;
+  }
+
+  .upload-heading > small {
+    flex: 0 0 auto;
+    padding-top: 2px;
+  }
+
+  .upload-button {
+    flex: 0 0 calc(100% - 60px);
+    width: auto;
+    min-width: 0;
+    margin-left: 60px;
+  }
+}
