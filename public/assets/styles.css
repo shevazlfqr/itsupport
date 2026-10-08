@@ -7236,3 +7236,46 @@ form[aria-busy="true"] button[type="submit"] {
     width: min(328px, calc(100vw - 24px));
   }
 }
+
+/* ===== mobile topbar controls ===== */
+@media (max-width: 600px) {
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    min-height: 40px !important;
+    height: 40px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .theme-toggle,
+  .notification-button,
+  .topbar .btn.primary.compact {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px !important;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .topbar .btn.primary.compact {
+    gap: 0;
+    font-size: 0;
+  }
+
+  .topbar .btn.primary.compact .ui-icon,
+  .notification-button .ui-icon,
+  .theme-toggle .ui-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+  }
+}
