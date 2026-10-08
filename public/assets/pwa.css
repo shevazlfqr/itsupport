@@ -25,6 +25,27 @@
 .pwa-status button[data-pwa-dismiss] { width: 44px; padding: 0; font-size: 20px; line-height: 1; }
 .pwa-status.is-error { border-color: #c14b5b; }
 .pwa-status.is-error button[data-pwa-action] { border-color: #a7394a; background: #a7394a; }
+.install-app-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control, 6px);
+  background: var(--surface-solid, #fff);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.install-app-button[hidden] { display: none; }
+.install-app-button:hover { border-color: #164fc9; color: #164fc9; }
+.install-app-button > span:last-child { font-size: 18px; line-height: 1; }
 
 @media (max-width: 600px) {
   .pwa-status { right: 10px; bottom: 10px; width: calc(100vw - 20px); }

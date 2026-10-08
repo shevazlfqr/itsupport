@@ -65,12 +65,12 @@ Saat koneksi terputus, aplikasi menampilkan status offline dan navigasi baru mem
 ### Menjalankan dan memeriksa PWA
 
 1. Jalankan aplikasi melalui Laragon atau `artisan serve`. Untuk installability di device, gunakan HTTPS; `localhost` tetap mendapat pengecualian untuk development.
-2. Buka `/` atau `/login`, login dengan akun kantor, lalu periksa prompt `Pasang IT Support` jika browser mengirimkan `beforeinstallprompt`.
+2. Buka `/` atau `/login`, login dengan akun kantor, lalu periksa prompt `Pasang IT Support` jika browser mengirimkan `beforeinstallprompt`. Prompt otomatis hanya ditampilkan sekali; jika ditutup, pilihan install tetap tersedia lewat menu `Pasang aplikasi` di sidebar.
 3. Di Chrome DevTools, buka Application lalu periksa Manifest, Service Workers, dan mode offline. Pastikan request dashboard atau ticket tidak muncul di Cache Storage.
-4. Di iPhone Safari, gunakan Share lalu `Add to Home Screen`. Safari tidak menyediakan `beforeinstallprompt`, sehingga aplikasi menampilkan instruksi manual ketika dijalankan melalui browser.
+4. Di iPhone Safari, gunakan Share lalu `Add to Home Screen`. Safari tidak menyediakan `beforeinstallprompt`, sehingga aplikasi menampilkan instruksi manual sekali dan menyediakan menu `Pasang aplikasi` untuk membukanya lagi.
 5. Uji update dengan menaikkan `CACHE_VERSION` di `public/sw.js`. Worker baru menunggu persetujuan tombol `Perbarui`, kemudian halaman dimuat ulang setelah worker baru aktif.
 
-PWA tidak menggantikan authentication Laravel. Cookie session, CSRF, guard role, dan logout tetap berjalan melalui request server biasa. Jangan menaruh password, token, atau response ticket ke `localStorage` maupun membuat cache privat baru tanpa audit keamanan.
+PWA tidak menggantikan authentication Laravel. Cookie session, CSRF, guard role, dan logout tetap berjalan melalui request server biasa. Browser hanya menyimpan penanda bahwa prompt install sudah ditutup; password, token, dan response ticket tidak ditaruh di `localStorage` maupun cache privat.
 
 ## Struktur project
 

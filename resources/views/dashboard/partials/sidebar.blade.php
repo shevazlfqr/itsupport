@@ -29,6 +29,10 @@
         <span>?</span>
         <strong>Butuh bantuan cepat?</strong>
         <p>Untuk insiden kritis, hubungi ext. 101.</p>
+        <button type="button" class="install-app-button" data-pwa-install hidden>
+            <span>Pasang aplikasi</span>
+            <span aria-hidden="true">+</span>
+        </button>
     </div>
     <div class="profile">
         <div class="avatar">{{ e(strtoupper(substr($user['name'], 0, 1))) }}</div>

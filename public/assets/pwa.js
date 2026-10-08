@@ -5,15 +5,44 @@
   const message = status?.querySelector("[data-pwa-message]");
   const action = status?.querySelector("[data-pwa-action]");
   const dismiss = status?.querySelector("[data-pwa-dismiss]");
+  const installButtons = [...document.querySelectorAll("[data-pwa-install]")];
+  const installDismissedKey = "helpdesk-pwa-install-dismissed";
   let deferredInstallPrompt = null;
   let serviceWorkerRegistration = null;
   let reloadingForUpdate = false;
   let dirtyForm = false;
+  let installNoticeVisible = false;
+  let installMenuAvailable = false;
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = () =>
+    window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const wasInstallNoticeDismissed = () => {
+    try {
+      return window.localStorage.getItem(installDismissedKey) === "1";
+    } catch (_) {
+      return false;
+    }
+  };
+  const rememberInstallDismissal = () => {
+    try {
+      window.localStorage.setItem(installDismissedKey, "1");
+    } catch (_) {
+      // Private browsing may block storage; the current page still remains quiet.
+    }
+  };
+  const setInstallMenuVisible = (visible) => {
+    const canInstall = visible && !isStandalone();
+    installButtons.forEach((button) => {
+      button.hidden = !canInstall;
+    });
+  };
 
   const hideStatus = () => {
     if (!status) return;
     status.hidden = true;
     status.classList.remove("is-error");
+    installNoticeVisible = false;
     if (action) {
       action.hidden = true;
       action.onclick = null;
@@ -22,6 +51,7 @@
 
   const showStatus = ({ title, detail, kind = "info", actionLabel, onAction }) => {
     if (!status || !message) return;
+    installNoticeVisible = false;
     status.hidden = false;
     status.classList.toggle("is-error", kind === "error");
     status.querySelector("strong").textContent = title;
@@ -33,11 +63,21 @@
     }
   };
 
-  dismiss?.addEventListener("click", hideStatus);
+  const showInstallStatus = (options) => {
+    showStatus(options);
+    installNoticeVisible = true;
+  };
 
-  const showInstallPrompt = () => {
-    if (!deferredInstallPrompt || !status) return;
-    showStatus({
+  dismiss?.addEventListener("click", () => {
+    if (installNoticeVisible) rememberInstallDismissal();
+    hideStatus();
+  });
+
+  const showInstallPrompt = ({ manual = false } = {}) => {
+    if (!deferredInstallPrompt || !status || (!manual && wasInstallNoticeDismissed())) return;
+    installMenuAvailable = true;
+    setInstallMenuVisible(true);
+    showInstallStatus({
       title: "Pasang IT Support",
       detail: "Buka helpdesk dari Home Screen tanpa mengetik URL lagi.",
       actionLabel: "Pasang aplikasi",
@@ -45,30 +85,64 @@
         const promptEvent = deferredInstallPrompt;
         deferredInstallPrompt = null;
         hideStatus();
-        await promptEvent.prompt();
-        await promptEvent.userChoice;
+        try {
+          await promptEvent.prompt();
+          const choice = await promptEvent.userChoice;
+          if (choice?.outcome !== "accepted") rememberInstallDismissal();
+        } catch (_) {
+          rememberInstallDismissal();
+        }
+        setInstallMenuVisible(installMenuAvailable || isIos);
       },
     });
   };
 
+  const showIosInstallInstructions = () => {
+    if (!status || !isIos || isStandalone()) return;
+    installMenuAvailable = true;
+    setInstallMenuVisible(true);
+    showInstallStatus({
+      title: "Tambahkan ke Layar Utama",
+      detail: "Di Safari, ketuk Bagikan lalu pilih Tambahkan ke Layar Utama.",
+    });
+  };
+
+  installButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (deferredInstallPrompt) {
+        showInstallPrompt({ manual: true });
+      } else if (isIos) {
+        showIosInstallInstructions();
+      } else {
+        showStatus({
+          title: "Instalasi belum tersedia",
+          detail: "Gunakan menu browser Tambahkan ke Layar Utama jika opsi ini tersedia.",
+        });
+      }
+    });
+  });
+
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
+    installMenuAvailable = true;
+    setInstallMenuVisible(true);
     showInstallPrompt();
   });
 
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
+    installMenuAvailable = false;
+    setInstallMenuVisible(false);
     hideStatus();
   });
 
-  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  if (isIos && !isStandalone && !deferredInstallPrompt) {
-    showStatus({
-      title: "Tambahkan ke Layar Utama",
-      detail: "Di Safari, ketuk Bagikan lalu pilih Tambahkan ke Layar Utama.",
-    });
+  if (isStandalone()) {
+    setInstallMenuVisible(false);
+  } else if (isIos) {
+    installMenuAvailable = true;
+    setInstallMenuVisible(true);
+    if (!wasInstallNoticeDismissed()) showIosInstallInstructions();
   }
 
   const showUpdatePrompt = (registration) => {
