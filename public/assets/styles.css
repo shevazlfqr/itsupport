@@ -7244,8 +7244,8 @@ form[aria-busy="true"] button[type="submit"] {
     align-items: center;
     justify-content: center;
     min-width: 56px;
-    min-height: 40px !important;
-    height: 40px;
+    min-height: 44px !important;
+    height: 44px;
     padding: 0 10px;
     font-size: 13px;
     font-weight: 700;
@@ -7257,10 +7257,10 @@ form[aria-busy="true"] button[type="submit"] {
   .topbar .btn.primary.compact {
     display: inline-grid;
     place-items: center;
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    min-height: 40px !important;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px !important;
     padding: 0;
     line-height: 1;
   }
@@ -7277,6 +7277,43 @@ form[aria-busy="true"] button[type="submit"] {
     width: 18px;
     height: 18px;
     margin: 0;
+  }
+}
+
+/* Keep touch controls usable without changing their mobile-first hierarchy. */
+@media (max-width: 700px) {
+  .btn,
+  .btn-reset-filter,
+  .back-link,
+  .row-arrow,
+  .profile-logout,
+  .user-edit-close,
+  .confirm-close,
+  .smart-select-trigger,
+  .custom-date-trigger,
+  .smart-select-menu button,
+  .custom-date-nav,
+  .custom-date-action,
+  .user-state-filters button,
+  .ticket-tabs a,
+  .range-switch a,
+  .action-toast > button,
+  .update-toast > button {
+    min-height: 44px;
+  }
+
+  .user-edit-close,
+  .confirm-close,
+  .custom-date-trigger,
+  .action-toast > button,
+  .update-toast > button {
+    min-width: 44px;
+  }
+
+  .custom-date-trigger {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
   }
 }
 
