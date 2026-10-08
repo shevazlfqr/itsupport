@@ -4,9 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#1046AE">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="icon" href="{{ asset('icons/icon-192.svg') }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.svg') }}">
     <title>Helpdesk IT Support</title>
     <script>document.documentElement.dataset.theme = localStorage.getItem('helpdesk-theme') || 'light'</script>
     <link rel="stylesheet" href="{{ asset('assets/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/pwa.css') }}">
 </head>
 <body class="login-page">
     <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
@@ -44,6 +52,17 @@
             <p class="login-footer">Butuh akses? Hubungi administrator IT kantor.</p>
         </section>
     </main>
+    <aside class="pwa-status" data-pwa-status hidden aria-live="polite">
+        <div class="pwa-status-copy">
+            <strong data-pwa-title>IT Support</strong>
+            <span data-pwa-message></span>
+        </div>
+        <div class="pwa-status-actions">
+            <button type="button" data-pwa-action hidden></button>
+            <button type="button" data-pwa-dismiss aria-label="Tutup pemberitahuan">&times;</button>
+        </div>
+    </aside>
     <script src="{{ asset('assets/app.js') }}"></script>
+    <script src="{{ asset('assets/pwa.js') }}"></script>
 </body>
 </html>

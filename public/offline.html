@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1046AE">
+    <title>Offline | IT Support</title>
+    <style>
+        :root { color-scheme: light dark; font-family: "Segoe UI", Arial, sans-serif; }
+        body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #EAF0F9; color: #132B50; }
+        main { width: min(460px, calc(100% - 32px)); padding: 28px; border: 1px solid #B9C8DE; background: #F7FAFF; box-shadow: 5px 5px 0 #C8D6EA; }
+        .mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 24px; background: #1046AE; color: #fff; font-size: 22px; font-weight: 800; }
+        p { color: #475F80; line-height: 1.6; }
+        button { min-height: 44px; padding: 0 16px; border: 1px solid #1046AE; background: #1046AE; color: #fff; font-weight: 700; cursor: pointer; }
+        button:focus-visible { outline: 3px solid #9BBCFE; outline-offset: 3px; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #071326; color: #E5EFFF; }
+            main { border-color: #2A4770; background: #0D203C; box-shadow: 5px 5px 0 #16345C; }
+            p { color: #B2C3DE; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="mark" aria-hidden="true">H</div>
+        <h1>Koneksi sedang offline</h1>
+        <p>IT Support membutuhkan koneksi ke server untuk menampilkan ticket dan menyimpan perubahan. Periksa jaringan, lalu coba lagi.</p>
+        <button type="button" onclick="location.reload()">Coba lagi</button>
+    </main>
+</body>
+</html>

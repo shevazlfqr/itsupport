@@ -52,6 +52,25 @@ Migration tidak menjalankan reset, seed, atau penghapusan data. Backup native ha
 - Filter, export CSV, ringkasan analitik, polling notifikasi, serta light dan dark mode.
 - Pengelolaan akun oleh Admin dengan validasi password, perubahan role, dan aktivasi akun.
 - Layout responsif dengan skip link, fokus keyboard, label form, dan header keamanan HTTP.
+- PWA installable dengan manifest, icon aplikasi, service worker, prompt install, dan halaman offline.
+
+## PWA dan batasan offline
+
+Project ini menggunakan PWA online-first. Browser desktop tetap mengakses URL Laravel yang sama, sedangkan Android Chrome atau browser yang mendukung installability dapat memasang `IT Support` ke Home Screen dengan mode `standalone`.
+
+Service worker hanya menyimpan asset publik dan app shell: CSS, JavaScript, icon, manifest, serta halaman offline. Navigasi HTML, halaman login, endpoint API, route ticket, route user, upload, dan response yang mungkin berisi session atau data ticket tidak disimpan di cache. Dengan begitu cache tidak menjadi sumber data lintas akun setelah logout atau login dengan akun lain.
+
+Saat koneksi terputus, aplikasi menampilkan status offline dan navigasi baru memakai `offline.html` jika server tidak dapat dijangkau. Pengiriman ticket tidak diantrekan secara diam-diam dan tidak akan dianggap berhasil tanpa response Laravel. Push notification belum diaktifkan karena memerlukan kontrak event backend, penyimpanan subscription, permission flow, dan worker pengiriman terpisah.
+
+### Menjalankan dan memeriksa PWA
+
+1. Jalankan aplikasi melalui Laragon atau `artisan serve`. Untuk installability di device, gunakan HTTPS; `localhost` tetap mendapat pengecualian untuk development.
+2. Buka `/` atau `/login`, login dengan akun kantor, lalu periksa prompt `Pasang IT Support` jika browser mengirimkan `beforeinstallprompt`.
+3. Di Chrome DevTools, buka Application lalu periksa Manifest, Service Workers, dan mode offline. Pastikan request dashboard atau ticket tidak muncul di Cache Storage.
+4. Di iPhone Safari, gunakan Share lalu `Add to Home Screen`. Safari tidak menyediakan `beforeinstallprompt`, sehingga aplikasi menampilkan instruksi manual ketika dijalankan melalui browser.
+5. Uji update dengan menaikkan `CACHE_VERSION` di `public/sw.js`. Worker baru menunggu persetujuan tombol `Perbarui`, kemudian halaman dimuat ulang setelah worker baru aktif.
+
+PWA tidak menggantikan authentication Laravel. Cookie session, CSRF, guard role, dan logout tetap berjalan melalui request server biasa. Jangan menaruh password, token, atau response ticket ke `localStorage` maupun membuat cache privat baru tanpa audit keamanan.
 
 ## Struktur project
 
@@ -67,7 +86,11 @@ itsupport/
 |-- bootstrap/                  # Bootstrap aplikasi Laravel
 |-- config/helpdesk.php         # Status, role, kategori, SLA, dan batas upload
 |-- database/migrations/        # Migration guarded untuk schema existing
-|-- public/assets/              # CSS, JavaScript, SVG, dan Chart.js
+|-- public/assets/              # CSS, JavaScript, PWA helper, SVG, dan Chart.js
+|-- public/icons/               # Icon manifest 192, 512, dan maskable
+|-- public/manifest.webmanifest # Metadata installability
+|-- public/sw.js                 # Service worker online-first
+|-- public/offline.html          # Fallback saat navigasi gagal
 |-- resources/views/            # Layout, halaman auth, dan partial dashboard
 |   |-- layouts/app.blade.php
 |   `-- dashboard/partials/     # Sidebar, topbar, flash, dan section dashboard
