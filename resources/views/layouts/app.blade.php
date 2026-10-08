@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="{{ asset('assets/pwa.css') }}">
     @stack('head')
 </head>
-<body>
+<body data-updates-endpoint="{{ route('updates') }}">
     <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
     <div class="app-shell">
         @include('dashboard.partials.sidebar')

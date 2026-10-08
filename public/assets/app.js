@@ -1133,6 +1133,8 @@ if (document.querySelector(".app-shell")) {
       setTimeout(() => location.reload(), 2200);
   };
   let pollingErrorToast = null;
+  let pollingDisabled = false;
+  const updatesEndpoint = document.body.dataset.updatesEndpoint || "/api/updates";
   const clearPollingError = () => {
     pollingErrorToast?.remove();
     pollingErrorToast = null;
@@ -1151,12 +1153,19 @@ if (document.querySelector(".app-shell")) {
     pollingErrorToast = toast;
   };
   const pollUpdates = async () => {
-    if (document.hidden) return;
+    if (document.hidden || pollingDisabled || !navigator.onLine) return;
     try {
+      const updatesUrl = new URL(updatesEndpoint, window.location.origin);
+      updatesUrl.searchParams.set("since", updateCursor);
       const response = await fetch(
-        `index.php?api=updates&since=${encodeURIComponent(updateCursor)}`,
+        updatesUrl,
         { headers: { Accept: "application/json" }, cache: "no-store" },
       );
+      if (response.status === 401 || response.status === 419) {
+        pollingDisabled = true;
+        clearPollingError();
+        return;
+      }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
       updateCursor = result.server_time || new Date().toISOString();
@@ -1164,7 +1173,7 @@ if (document.querySelector(".app-shell")) {
       if (result.changed && result.events?.length)
         showUpdateToast(result.events[result.events.length - 1]);
     } catch (_) {
-      showPollingError();
+      if (navigator.onLine) showPollingError();
     }
   };
   setInterval(pollUpdates, 8000);
