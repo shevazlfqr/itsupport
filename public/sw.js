@@ -1,4 +1,4 @@
-const CACHE_VERSION = "itsupport-static-v2";
+const CACHE_VERSION = "itsupport-static-v3";
 const STATIC_ASSETS = [
   "/offline.html",
   "/manifest.webmanifest",
