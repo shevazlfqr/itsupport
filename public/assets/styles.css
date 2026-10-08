@@ -7250,6 +7250,7 @@ form[aria-busy="true"] button[type="submit"] {
     font-size: 13px;
     font-weight: 700;
     line-height: 1;
+    flex: 0 0 56px;
   }
 
   .theme-toggle,
@@ -7263,11 +7264,15 @@ form[aria-busy="true"] button[type="submit"] {
     min-height: 44px !important;
     padding: 0;
     line-height: 1;
+    flex: 0 0 44px;
   }
 
   .topbar .btn.primary.compact {
     gap: 0;
     font-size: 0;
+    max-width: 44px;
+    text-indent: 0;
+    white-space: nowrap;
   }
 
   .topbar .btn.primary.compact .ui-icon,
@@ -7277,6 +7282,8 @@ form[aria-busy="true"] button[type="submit"] {
     width: 18px;
     height: 18px;
     margin: 0;
+    justify-self: center;
+    align-self: center;
   }
 }
 
