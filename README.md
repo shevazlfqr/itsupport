@@ -1,22 +1,30 @@
-# Helpdesk IT Support
+# IT Support Helpdesk
 
-Portal ticketing internal untuk pelaporan kendala IT, penugasan teknisi, percakapan, SLA, dan pengelolaan akun.
+Portal internal untuk membuat tiket bantuan IT, memantau penanganan, berdiskusi dengan tim, dan mengelola akun kantor. Aplikasi menggunakan Laravel dan tetap dapat dibuka sebagai website desktop maupun dipasang sebagai PWA di perangkat yang mendukung.
 
-## Stack dan kebutuhan
+![Preview halaman login desktop](docs/previews/login-desktop.png)
 
-- PHP 8.3 atau lebih baru
-- Laravel 13
+## Dokumentasi
+
+- [Panduan aplikasi, akses, arsitektur, alur tiket, PWA, keamanan, dan deployment](docs/APPLICATION.md)
+- [Arah visual dan kontrak UI](DESIGN.md)
+- [Preview login desktop](docs/previews/login-desktop.png)
+
+## Teknologi
+
+- PHP `^8.3`
+- Laravel `^13.17` (versi dependency yang terpasang saat dokumentasi ini diperbarui: Laravel Framework 13.31.0)
 - Composer 2.x
 - MySQL atau MariaDB
-- Ekstensi PHP `pdo_mysql`, `mbstring`, `fileinfo`, `openssl`, dan `xml`
+- Blade, CSS, dan JavaScript biasa; tidak memakai SPA framework atau frontend bundler
 
-Laravel 13 membutuhkan PHP minimal 8.3. Lihat [catatan rilis resmi Laravel](https://laravel.com/framework/docs/13.x/releases) untuk matriks dukungan versi.
+Laravel 13 membutuhkan PHP minimal 8.3. Lihat [dokumentasi rilis Laravel 13](https://laravel.com/docs/13.x/releases) untuk matriks dukungan.
 
-## Menjalankan di Laragon
+## Menjalankan secara lokal di Laragon
 
-1. Pastikan Laragon memilih PHP 8.3. Pada instalasi ini executable yang tervalidasi adalah `C:\laragon\bin\php\PHP-8.3.30\php.exe`.
-2. Jika `.env` belum ada, salin `.env.example` menjadi `.env`, lalu sesuaikan `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD`.
-3. Pasang dependency dan siapkan aplikasi:
+1. Pastikan PHP Laragon aktif adalah PHP 8.3. Pada mesin pengembangan project ini executable-nya `C:\laragon\bin\php\PHP-8.3.30\php.exe`.
+2. Siapkan `.env`. Jika file belum ada, salin `.env.example`, lalu atur koneksi database lokal.
+3. Pasang dependency dan siapkan Laravel:
 
    ```powershell
    if (-not (Test-Path .env)) { Copy-Item .env.example .env }
@@ -28,85 +36,33 @@ Laravel 13 membutuhkan PHP minimal 8.3. Lihat [catatan rilis resmi Laravel](http
    & $php artisan storage:link
    ```
 
-   Migration helpdesk bersifat guarded: tabel lama tidak dihapus dan kolom SLA ditambahkan hanya jika belum ada.
-4. Arahkan DocumentRoot virtual host Laragon ke folder `public`, yaitu `C:\laragon\www\itsupport\public`.
-5. Alternatif untuk development cepat:
+4. Untuk virtual host Laragon, arahkan document root ke `C:\laragon\www\itsupport\public`. Atau jalankan server development:
 
    ```powershell
    & 'C:\laragon\bin\php\PHP-8.3.30\php.exe' artisan serve
    ```
 
-Jika perintah `php` atau `composer` belum masuk PATH, jalankan executable PHP 8.3 yang dipilih Laragon secara eksplisit. Jangan memakai `C:\laragon\bin\php\php.ini` yang masih menunjuk ke ekstensi XAMPP; gunakan `php.ini` milik versi PHP aktif.
+Buka URL yang ditampilkan `artisan serve` atau host Laragon, lalu login memakai akun yang sudah diprovisikan. Tidak ada kredensial default di repository. Jangan menjalankan seeder atau reset database pada data kantor tanpa prosedur backup dan persetujuan yang sesuai. Migration helpdesk memeriksa tabel yang sudah ada, menambah kolom `sla_deadline` jika belum ada, dan `down()`-nya tidak menghapus tabel.
 
-## Akun dan data lokal
+## Fitur
 
-Data pengguna lama tetap berada di database `itsupport`. Password tidak disimpan di repository. Gunakan password yang sudah dibuat saat provisioning lokal atau buat akun baru melalui menu admin.
+- Buat, lihat, saring, dan ekspor tiket; tiket memiliki status, prioritas, kategori, SLA, assignee, komentar, aktivitas, dan catatan penyelesaian.
+- Hak akses berbasis role `employee`, `it`, dan `admin`.
+- Kelola akun kantor oleh Admin.
+- Dashboard dengan antrean kerja, ringkasan, analitik untuk role yang berhak, serta polling aktivitas.
+- Layout responsif, pilihan tema, navigasi install aplikasi, dan PWA online-first.
 
-Migration tidak menjalankan reset, seed, atau penghapusan data. Backup native hasil pemindahan tersedia di luar project bila diperlukan.
-
-## Fitur utama
-
-- Ticket baru dengan kategori, prioritas, deskripsi, SLA, dan lampiran JPG, PNG, WebP, HEIC, atau HEIF.
-- Penugasan dan perubahan status oleh Tim IT atau Admin.
-- Komentar, aktivitas, catatan penyelesaian, konfirmasi requester, dan status read-only untuk ticket final.
-- Filter, export CSV, ringkasan analitik, polling notifikasi, serta light dan dark mode.
-- Pengelolaan akun oleh Admin dengan validasi password, perubahan role, dan aktivasi akun.
-- Layout responsif dengan skip link, fokus keyboard, label form, dan header keamanan HTTP.
-- PWA installable dengan manifest, icon aplikasi, service worker, prompt install, dan halaman offline.
+Detail alur dan batas akses ada di [docs/APPLICATION.md](docs/APPLICATION.md).
 
 ## PWA dan batasan offline
 
-Project ini menggunakan PWA online-first. Browser desktop tetap mengakses URL Laravel yang sama, sedangkan Android Chrome atau browser yang mendukung installability dapat memasang `IT Support` ke Home Screen dengan mode `standalone`.
+Manifest dan service worker tersedia di `public/`. Service worker menyimpan asset statis publik dan halaman offline, bukan halaman login, dashboard, API, atau data tiket. Request navigasi selalu menuju server; saat gagal, aplikasi menampilkan fallback offline. Membuat atau mengubah tiket tetap memerlukan server dan tidak masuk antrean offline.
 
-Service worker hanya menyimpan asset publik dan app shell: CSS, JavaScript, icon, manifest, serta halaman offline. Navigasi HTML, halaman login, endpoint API, route ticket, route user, upload, dan response yang mungkin berisi session atau data ticket tidak disimpan di cache. Dengan begitu cache tidak menjadi sumber data lintas akun setelah logout atau login dengan akun lain.
+Untuk pemasangan di Android gunakan browser yang mendukung install prompt dan HTTPS pada deployment. Di iPhone, gunakan Safari → Share → Add to Home Screen. Jika prompt otomatis ditutup, pilihan pemasangan tersedia lewat menu aplikasi. Push notification belum diimplementasikan.
 
-Saat koneksi terputus, aplikasi menampilkan status offline dan navigasi baru memakai `offline.html` jika server tidak dapat dijangkau. Pengiriman ticket tidak diantrekan secara diam-diam dan tidak akan dianggap berhasil tanpa response Laravel. Push notification belum diaktifkan karena memerlukan kontrak event backend, penyimpanan subscription, permission flow, dan worker pengiriman terpisah.
+## Pemeriksaan dan deployment
 
-### Menjalankan dan memeriksa PWA
-
-1. Jalankan aplikasi melalui Laragon atau `artisan serve`. Untuk installability di device, gunakan HTTPS; `localhost` tetap mendapat pengecualian untuk development.
-2. Buka `/` atau `/login`, login dengan akun kantor, lalu periksa prompt `Pasang IT Support` jika browser mengirimkan `beforeinstallprompt`. Prompt otomatis hanya ditampilkan sekali; jika ditutup, pilihan install tetap tersedia lewat menu `Pasang aplikasi` di sidebar.
-3. Di Chrome DevTools, buka Application lalu periksa Manifest, Service Workers, dan mode offline. Pastikan request dashboard atau ticket tidak muncul di Cache Storage.
-4. Di iPhone Safari, gunakan Share lalu `Add to Home Screen`. Safari tidak menyediakan `beforeinstallprompt`, sehingga aplikasi menampilkan instruksi manual sekali dan menyediakan menu `Pasang aplikasi` untuk membukanya lagi.
-5. Uji update dengan menaikkan `CACHE_VERSION` di `public/sw.js`. Worker baru menunggu persetujuan tombol `Perbarui`, kemudian halaman dimuat ulang setelah worker baru aktif.
-
-PWA tidak menggantikan authentication Laravel. Cookie session, CSRF, guard role, dan logout tetap berjalan melalui request server biasa. Browser hanya menyimpan penanda bahwa prompt install sudah ditutup; password, token, dan response ticket tidak ditaruh di `localStorage` maupun cache privat.
-
-## Struktur project
-
-```text
-itsupport/
-|-- app/
-|   |-- Http/Controllers/       # Endpoint web dan adapter kompatibilitas
-|   |-- Http/Middleware/        # Role, CSRF legacy, dan security headers
-|   |-- Http/Requests/          # Validasi input per use case
-|   |-- Models/                 # Model Eloquent untuk tabel helpdesk
-|   |-- Services/               # Transaksi ticket/user dan data dashboard
-|   `-- Support/legacy.php      # Adapter schema lama untuk boundary kompatibilitas
-|-- bootstrap/                  # Bootstrap aplikasi Laravel
-|-- config/helpdesk.php         # Status, role, kategori, SLA, dan batas upload
-|-- database/migrations/        # Migration guarded untuk schema existing
-|-- public/assets/              # CSS, JavaScript, PWA helper, SVG, dan Chart.js
-|-- public/icons/               # Icon manifest 192, 512, dan maskable
-|-- public/manifest.webmanifest # Metadata installability
-|-- public/sw.js                 # Service worker online-first
-|-- public/offline.html          # Fallback saat navigasi gagal
-|-- resources/views/            # Layout, halaman auth, dan partial dashboard
-|   |-- layouts/app.blade.php
-|   `-- dashboard/partials/     # Sidebar, topbar, flash, dan section dashboard
-|-- routes/web.php              # Route canonical dan route kompatibilitas index.php
-|-- storage/app/public/uploads/ # Lampiran yang dapat diakses melalui storage link
-|-- DESIGN.md                   # Arah visual dan kontrak UI
-`-- README.md                   # Panduan ini
-```
-
-Route `/index.php` dan POST legacy dipertahankan sementara agar bookmark atau form lama tidak langsung rusak. Feature baru sebaiknya memakai named route Laravel, FormRequest, controller, service, dan Eloquent model.
-
-Data dashboard disiapkan oleh `App\Services\DashboardViewData`, lalu dirender melalui layout `resources/views/layouts/app.blade.php` dan partial di `resources/views/dashboard/partials/`.
-
-Salinan sumber native sebelum migrasi dipindahkan ke `C:\laragon\www\itsupport-native-backup-20260912`, di luar project agar tidak ikut menjadi source runtime.
-
-## Perintah pemeriksaan
+Perintah pemeriksaan yang tersedia:
 
 ```powershell
 php artisan route:list
@@ -114,4 +70,6 @@ php artisan view:cache
 php artisan test
 ```
 
-Sebelum deploy, aktifkan HTTPS, gunakan akun database khusus dengan password kuat, matikan `APP_DEBUG`, dan jadwalkan backup database serta `storage/app/public/uploads`.
+Sebelum production: aktifkan HTTPS, set `APP_ENV=production` dan `APP_DEBUG=false`, gunakan kredensial database khusus, siapkan backup database dan berkas upload, lalu verifikasi akses lampiran sesuai kebutuhan kerahasiaan organisasi. Lihat catatan keamanan dan deployment di [docs/APPLICATION.md](docs/APPLICATION.md).
+
+Branch utama repository adalah `master`.

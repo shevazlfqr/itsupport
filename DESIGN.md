@@ -1,11 +1,12 @@
 # Design Direction
 
-Status: active direction for Helpdesk IT Support.
+Status: active direction for IT Support Helpdesk. UI reference: [login desktop](docs/previews/login-desktop.png). Product behavior, access rules, and PWA details: [application guide](docs/APPLICATION.md).
 
 ## Brief pemilik produk
 
-Pertahankan font Retro Hybrid. Tema perlu lebih terasa ASCII. Referensi biru,
-bitmap, dan garis teknis dari pemilik produk menjadi inspirasi, bukan salinan.
+Pertahankan bahasa visual biru kobalt, pola ASCII, dan garis teknis dari referensi
+pemilik produk tanpa menyalinnya. Typography mengikuti CSS aktif: system sans
+untuk isi dan heading, monospace hanya sebagai aksen label/data.
 
 ## Arah visual
 
@@ -42,7 +43,8 @@ Teks header `#F4F8FF` dan `#D4E3FF`; tekstur berintensitas rendah menjaga kontra
 - UI dan heading utama memakai `Segoe UI, system-ui, -apple-system, BlinkMacSystemFont, sans-serif` agar headline dan paragraf terasa satu suara.
 - Display mono hanya dipakai pada label teknis, header tabel, badge, angka statistik, dan marker navigasi.
 - `Consolas, Courier New, monospace` dipertahankan sebagai aksen data, bukan font untuk headline panjang.
-- Ukuran dan bobot yang sudah ada tetap dipertahankan.
+- Ukuran dan bobot mengikuti hierarki komponen aktif di `public/assets/styles.css`;
+  jangan mengubah skala global sebagai efek samping perbaikan komponen.
 - Motif adalah SVG lokal dengan karakter monospace, tanpa font atau dependency baru.
 - Normalisasi typography lanjutan merupakan pekerjaan terpisah.
 
@@ -58,8 +60,9 @@ Teks header `#F4F8FF` dan `#D4E3FF`; tekstur berintensitas rendah menjaga kontra
 ## Alasan keputusan
 
 Biru dan motif karakter membawa referensi pengguna; panel solid menjaga keterbacaan;
-border tipis mengurangi kesan balok berat; font tetap karena Retro Hybrid sudah
-disetujui. Konten dan jarak komponen mengikuti fungsi helpdesk yang sudah ada.
+border tipis mengurangi kesan balok berat; system sans menjaga keterbacaan dan
+monospace memberi aksen operasional. Konten dan jarak komponen mengikuti fungsi
+helpdesk yang sudah ada.
 
 ## UI system contract
 
@@ -113,7 +116,7 @@ disetujui. Konten dan jarak komponen mengikuti fungsi helpdesk yang sudah ada.
 
 ### Visual QA boundary
 
-- The local `assets/ascii-field.svg` is the only decorative theme asset. It is
+- The local `public/assets/ascii-field.svg` is the decorative theme texture. It is
   static, low-intensity, and must not reduce text or control contrast.
 - Theme work does not change the approved font sizes, weights, or workflow
   behavior. It changes the visual contract around those existing components.
