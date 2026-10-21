@@ -51,6 +51,11 @@ class Ticket extends Model
         return $this->hasMany(Activity::class)->latest('created_at');
     }
 
+    public function events()
+    {
+        return $this->hasMany(TicketEvent::class)->orderBy('occurred_at_utc')->orderBy('id');
+    }
+
     public function attachments()
     {
         return $this->hasMany(Attachment::class)->latest('created_at');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Requests\LoginRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -40,6 +41,7 @@ class AuthController extends Controller
 
         RateLimiter::clear($key);
         $request->session()->regenerate();
+        $request->session()->put(EnsureActiveAccount::SESSION_VERSION_KEY, (int) $request->user()->session_version);
 
         return redirect()->route('dashboard')->with('success', 'Selamat datang, '.$request->user()->name.'.');
     }

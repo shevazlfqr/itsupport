@@ -56,9 +56,8 @@ class UserController extends Controller
             return $this->failure($request, 'Admin tidak dapat menonaktifkan akunnya sendiri.');
         }
 
-        $wasActive = $user->active;
-        $this->users->toggle($user);
-        $message = $wasActive ? 'Akun berhasil dinonaktifkan.' : 'Akun berhasil diaktifkan.';
+        $updatedUser = $this->users->toggle($user);
+        $message = $updatedUser->active ? 'Akun berhasil diaktifkan.' : 'Akun berhasil dinonaktifkan.';
 
         return redirect()->route('dashboard', ['view' => 'users'])->with('success', $message);
     }
@@ -70,5 +69,10 @@ class UserController extends Controller
         }
 
         return redirect()->route('dashboard', ['view' => 'users'])->with('error', $message);
+    }
+
+    private function ensureAdmin(Request $request): void
+    {
+        abort_unless($request->user()?->role === 'admin', 403, 'Akses khusus Admin.');
     }
 }

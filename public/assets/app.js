@@ -266,7 +266,9 @@ if (ticketUiData?.status === "completed" && ticketUiData.is_requester) {
     const decisionCard = document.createElement("form");
     decisionCard.method = "post";
     decisionCard.className = "card requester-decision";
-    decisionCard.innerHTML = `<input type="hidden" name="csrf" value="${ticketUiData.csrf}"><input type="hidden" name="action" value="requester_resolution"><input type="hidden" name="ticket_id" value="${new URLSearchParams(location.search).get("ticket") || ""}"><span>${icon("check", 21)}</span><h3>Apakah masalah sudah beres?</h3><p>Periksa solusi dari teknisi, lalu konfirmasi hasilnya.</p><div><button class="btn ghost" type="submit" name="decision" value="reopen">Masih Bermasalah</button><button class="btn primary" type="submit" name="decision" value="close">Sudah Beres</button></div>`;
+    decisionCard.innerHTML = `<input type="hidden" name="csrf"><input type="hidden" name="action" value="requester_resolution"><input type="hidden" name="ticket_id"><span>${icon("check", 21)}</span><h3>Apakah masalah sudah beres?</h3><p>Periksa solusi dari teknisi, lalu konfirmasi hasilnya.</p><div><button class="btn ghost" type="submit" name="decision" value="reopen">Masih Bermasalah</button><button class="btn primary" type="submit" name="decision" value="close">Sudah Beres</button></div>`;
+    decisionCard.elements.csrf.value = ticketUiData.csrf;
+    decisionCard.elements.ticket_id.value = new URLSearchParams(location.search).get("ticket") || "";
     detailSide.prepend(decisionCard);
   }
 }
@@ -656,7 +658,11 @@ document.querySelectorAll(".attachments a").forEach((link, index) => {
       meta.size >= 1048576
         ? `${(meta.size / 1048576).toFixed(1)} MB`
         : `${Math.ceil(meta.size / 1024)} KB`;
-    info.innerHTML = `<strong>${meta.name}</strong><small>${meta.mime.split("/").pop().toUpperCase()} · ${size}</small>`;
+    const filename = document.createElement("strong");
+    filename.textContent = meta.name;
+    const details = document.createElement("small");
+    details.textContent = `${meta.mime.split("/").pop().toUpperCase()} · ${size}`;
+    info.replaceChildren(filename, details);
   }
   const image = link.querySelector("img");
   if (image)
@@ -726,7 +732,7 @@ if (notification) {
     const open = !notification.classList.contains("open");
     notification.classList.toggle("open", open);
     notificationButton.setAttribute("aria-expanded", String(open));
-    if (open) notificationMenu?.querySelector("a")?.focus();
+    if (open) notificationMenu?.querySelector(".notification-mark-all-button, .notification-list > a")?.focus();
   });
   document.addEventListener("click", (event) => {
     if (!notification.contains(event.target)) closeNotification();
@@ -1134,7 +1140,8 @@ if (document.querySelector(".app-shell")) {
     document.querySelector(".update-toast")?.remove();
     const toast = document.createElement("div");
     toast.className = "update-toast";
-    toast.innerHTML = `<i>${icon("refresh", 18)}</i><div><strong>Ticket diperbarui</strong><span>${event.message || "Ada aktivitas baru"} pada ticket #${event.ticket_id}</span></div><button type="button">Refresh</button>`;
+    toast.innerHTML = `<i>${icon("refresh", 18)}</i><div><strong>Ticket diperbarui</strong><span></span></div><button type="button">Refresh</button>`;
+    toast.querySelector("span").textContent = `${event.message || "Ada aktivitas baru"} pada ticket #${event.ticket_id}`;
     toast
       .querySelector("button")
       .addEventListener("click", () => location.reload());

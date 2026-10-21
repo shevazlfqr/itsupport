@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserService
@@ -31,8 +32,13 @@ class UserService
 
     public function toggle(User $user): User
     {
-        $user->update(['active' => ! $user->active]);
+        return DB::transaction(function () use ($user): User {
+            $account = User::query()->lockForUpdate()->findOrFail($user->id);
+            $account->active = ! $account->active;
+            $account->session_version = (int) $account->session_version + 1;
+            $account->save();
 
-        return $user->fresh();
+            return $account;
+        });
     }
 }

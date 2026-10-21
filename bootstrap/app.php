@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\LegacyCsrfToken;
 use App\Http\Middleware\SecurityHeaders;
@@ -17,7 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
-        $middleware->alias(['role' => EnsureRole::class]);
+        $middleware->alias([
+            'role' => EnsureRole::class,
+            'active-account' => EnsureActiveAccount::class,
+        ]);
         $middleware->web(replace: [PreventRequestForgery::class => LegacyCsrfToken::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
     })

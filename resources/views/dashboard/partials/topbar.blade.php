@@ -11,11 +11,15 @@
             </button>
             <div id="notification-menu" class="notification-menu" role="region" aria-label="Aktivitas terbaru">
                 <div class="notification-head">
-                    <div>
+                    <div class="notification-head-copy">
                         <strong>Aktivitas terbaru</strong>
-                        <span>Perubahan terbaru pada ticket yang kamu ikuti</span>
+                        <span>Pembaruan tiket yang kamu ikuti</span>
                     </div>
                     @if ($unreadTotal)
+                        <form class="notification-mark-all" method="POST" action="{{ route('notifications.read-all') }}">
+                            @csrf
+                            <button class="notification-mark-all-button" type="submit" aria-label="Tandai semua notifikasi sudah dibaca">Tandai semua dibaca</button>
+                        </form>
                         <i>{{ $unreadTotal }}</i>
                     @endif
                 </div>

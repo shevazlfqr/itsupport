@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attachment rendering security test</title>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="detail-side"></aside>
+    <section class="attachments" aria-label="Attachment test cases"></section>
+  </main>
+  <input id="focus-hold" aria-label="Keep update refresh from navigating">
+  <script id="ticket-ui-data" type="application/json"></script>
+  <script>
+    const lessThan = String.fromCharCode(60);
+    const closeScript = `${lessThan}/script>`;
+    const filenamePayloads = [
+      '"><img src=x onerror="window.__xssExecuted=true">',
+      `${lessThan}svg onload="window.__xssExecuted=true"></svg>`,
+      `${lessThan}/strong>${lessThan}script>window.__xssExecuted=true${closeScript}`,
+      'screenshot (final) é.png',
+    ];
+    const activityPayloads = [
+      '<img src=x onerror="window.__xssExecuted=true">',
+      `${lessThan}svg onload="window.__xssExecuted=true"></svg>`,
+      `${lessThan}/span>${lessThan}script>window.__xssExecuted=true${closeScript}`,
+    ];
+    const queryPayload = '"><img src=x onerror="window.__xssExecuted=true">';
+    window.__xssExecuted = false;
+    window.__testFailures = [];
+    window.__activityPayloads = [...activityPayloads];
+    window.__pollUpdates = null;
+    window.fetch = async () => {
+      const message = window.__activityPayloads.shift();
+      return {
+        status: 200,
+        ok: true,
+        json: async () => ({
+          changed: true,
+          events: [{ message, ticket_id: 42 }],
+          server_time: new Date().toISOString(),
+        }),
+      };
+    };
+    window.setInterval = (callback) => {
+      window.__pollUpdates = callback;
+      return 1;
+    };
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    });
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      value: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    });
+    history.replaceState(null, '', `?ticket=${encodeURIComponent(queryPayload)}`);
+    document.querySelector('#ticket-ui-data').textContent = JSON.stringify({
+      status: 'completed',
+      is_requester: true,
+      csrf: queryPayload,
+      comments: [],
+      attachments: filenamePayloads.map((name) => ({ name, mime: 'image/png', size: 2048 })),
+    });
+    const list = document.querySelector('.attachments');
+    filenamePayloads.forEach(() => {
+      const link = document.createElement('a');
+      link.href = '#';
+      const image = document.createElement('img');
+      image.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+      image.alt = '';
+      const info = document.createElement('span');
+      link.append(image, info);
+      list.append(link);
+    });
+  </script>
+  <script src="/public/assets/app.js"></script>
+  <script>
+    (async () => {
+      const fail = (message) => window.__testFailures.push(message);
+      document.querySelector('#focus-hold').focus();
+
+      const links = [...document.querySelectorAll('.attachments a')];
+      const ticketData = JSON.parse(document.querySelector('#ticket-ui-data').textContent);
+      filenamePayloads.forEach((name, index) => {
+        const info = links[index].querySelector('span');
+        if (info.textContent !== name) fail(`Filename ${index} did not render as literal text.`);
+        if (info.querySelector('img, svg, script, iframe, input')) fail(`Filename ${index} created an active element.`);
+      });
+
+      const decision = document.querySelector('.requester-decision');
+      if (decision?.elements.ticket_id.value !== queryPayload) fail('Ticket query text changed or was interpreted as markup.');
+      if (decision?.elements.csrf.value !== ticketData.csrf) fail('CSRF value was not preserved.');
+      if (decision?.querySelector('img, script, iframe, input:not([type="hidden"])')) fail('Query or CSRF value created an active form element.');
+
+      for (let index = 0; index < activityPayloads.length; index += 1) {
+        await window.__pollUpdates();
+        const message = document.querySelector('.update-toast span');
+        const expected = `${activityPayloads[index]} pada ticket #42`;
+        if (message?.textContent !== expected) fail(`Activity ${index} did not render as literal text.`);
+        if (message?.querySelector('img, svg, script, iframe, input')) fail(`Activity ${index} created an active element.`);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      if (window.__xssExecuted) fail('A filename or activity event handler executed.');
+      document.documentElement.dataset.testResult = window.__testFailures.length ? 'FAIL' : 'PASS';
+      document.documentElement.dataset.testFailures = window.__testFailures.join(' | ');
+    })().catch((error) => {
+      document.documentElement.dataset.testResult = 'FAIL';
+      document.documentElement.dataset.testFailures = String(error);
+    });
+  </script>
+</body>
+</html>

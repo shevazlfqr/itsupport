@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
 class DashboardViewData
@@ -243,28 +244,30 @@ class DashboardViewData
 
         $analytics = null;
         if ($view === 'analytics') {
-            $rangeDays = (int) ($_GET['range'] ?? 30);
+            $rangeInput = $request->query('range', 30);
+            $requestedRange = is_string($rangeInput) || is_int($rangeInput)
+                ? filter_var($rangeInput, FILTER_VALIDATE_INT)
+                : false;
+            $rangeDays = $requestedRange === false ? 30 : $requestedRange;
             if (! in_array($rangeDays, [7, 30, 90], true)) {
                 $rangeDays = 30;
             }
-            $rangeStart = strtotime('-'.($rangeDays - 1).' days midnight');
+            [$periodStart, $periodEndExclusive] = $this->analyticsPeriodBounds($rangeDays);
+            $periodSummary = $this->analyticsPeriodSummary($tickets, $periodStart, $periodEndExclusive);
 
             $volumeLabels = [];
             $volumeCreated = [];
             $volumeResolved = [];
             for ($i = 0; $i < $rangeDays; $i++) {
-                $dayStart = strtotime("+$i days", $rangeStart);
-                $dayEnd = $dayStart + 86400;
-                $volumeLabels[] = date('d/m', $dayStart);
-                $created = 0;
+                $day = $periodStart->addDays($i);
+                $dayStart = $day->getTimestamp();
+                $dayEnd = $day->addDay()->getTimestamp();
+                $volumeLabels[] = $day->format('d/m');
+                $created = $periodSummary['daily_created'][$day->toDateString()];
                 $resolved = 0;
                 foreach ($tickets as $t) {
-                    $c = strtotime($t['created_at']);
-                    if ($c >= $dayStart && $c < $dayEnd) {
-                        $created++;
-                    }
                     if (in_array($t['status'], ['completed', 'closed'], true)) {
-                        $u = strtotime($t['updated_at']);
+                        $u = CarbonImmutable::parse($t['updated_at'], config('app.timezone', 'UTC'))->getTimestamp();
                         if ($u >= $dayStart && $u < $dayEnd) {
                             $resolved++;
                         }
@@ -333,6 +336,7 @@ class DashboardViewData
 
             $analytics = [
                 'range_days' => $rangeDays,
+                'period_summary' => $periodSummary,
                 'volume' => [
                     'labels' => $volumeLabels,
                     'created' => $volumeCreated,
@@ -418,5 +422,61 @@ class DashboardViewData
             'workspaceTitle' => $workspaceTitle,
             'workspaceDescription' => $workspaceDescription,
         ];
+    }
+
+    /**
+     * Return ticket creation and current-state distributions for the selected
+     * local calendar dates. This intentionally does not reuse legacy all-time
+     * SLA or resolution metrics.
+     */
+    private function analyticsPeriodSummary(array $tickets, CarbonImmutable $start, CarbonImmutable $endExclusive): array
+    {
+        $timezone = config('app.timezone', 'UTC');
+
+        $daily = [];
+        for ($date = $start; $date->lt($endExclusive); $date = $date->addDay()) {
+            $daily[$date->toDateString()] = 0;
+        }
+
+        $statuses = array_fill_keys(array_keys(config('helpdesk.statuses', [])), 0);
+        $priorities = array_fill_keys(array_keys(config('helpdesk.priorities', [])), 0);
+        $total = 0;
+
+        foreach ($tickets as $ticket) {
+            if (empty($ticket['created_at'])) {
+                continue;
+            }
+
+            $createdAt = CarbonImmutable::parse($ticket['created_at'], $timezone);
+            if ($createdAt->lt($start) || $createdAt->gte($endExclusive)) {
+                continue;
+            }
+
+            $total++;
+            $date = $createdAt->toDateString();
+            $daily[$date]++;
+            $status = (string) ($ticket['status'] ?? '');
+            $priority = (string) ($ticket['priority'] ?? '');
+            $statuses[$status] = ($statuses[$status] ?? 0) + 1;
+            $priorities[$priority] = ($priorities[$priority] ?? 0) + 1;
+        }
+
+        return [
+            'start_date' => $start->toDateString(),
+            'end_date' => $endExclusive->subDay()->toDateString(),
+            'timezone' => $timezone,
+            'total_created' => $total,
+            'daily_created' => $daily,
+            'status_snapshot' => $statuses,
+            'priority_snapshot' => $priorities,
+        ];
+    }
+
+    public function analyticsPeriodBounds(int $rangeDays): array
+    {
+        $timezone = config('app.timezone', 'UTC');
+        $today = CarbonImmutable::now($timezone)->startOfDay();
+
+        return [$today->subDays($rangeDays - 1), $today->addDay()];
     }
 }

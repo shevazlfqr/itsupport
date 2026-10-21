@@ -32,6 +32,7 @@ class User extends Authenticatable
     {
         return [
             'active' => 'boolean',
+            'session_version' => 'integer',
         ];
     }
 

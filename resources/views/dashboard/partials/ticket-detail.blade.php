@@ -87,9 +87,9 @@ if (
             "image/heif-sequence",
         ],
         true,
-    ); ?><a href="{{ asset('storage/uploads/' . $attachment['stored_name']) }}" target="_blank"><?php if (
+    ); ?><a href="{{ route('tickets.attachments.show', ['ticket' => $selected['id'], 'attachment' => $attachment['id'], 'download' => 1]) }}" target="_blank" rel="noopener"><?php if (
     $isHeic
-): ?><span class="file-placeholder">HEIC</span><?php else: ?><img src="{{ asset('storage/uploads/' . $attachment['stored_name']) }}" alt="{{ e($attachment['original_name']) }}"><?php endif; ?><span><?= e(
+): ?><span class="file-placeholder">HEIC</span><?php else: ?><img src="{{ route('tickets.attachments.show', ['ticket' => $selected['id'], 'attachment' => $attachment['id'], 'preview' => 1]) }}" alt="{{ e($attachment['original_name']) }}"><?php endif; ?><span><?= e(
     $attachment["original_name"],
 ) ?></span></a><?php
 endforeach; ?></div><?php endif;
