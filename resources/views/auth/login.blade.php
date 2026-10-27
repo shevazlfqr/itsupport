@@ -13,13 +13,13 @@
     <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.svg') }}">
     <title>Helpdesk IT Support</title>
     <script>document.documentElement.dataset.theme = localStorage.getItem('helpdesk-theme') || 'light'</script>
-    @php($assetVersion = '20261008.14')
+    @php($assetVersion = '20261027.01')
     <link rel="stylesheet" href="{{ asset('assets/styles.css') }}?v={{ $assetVersion }}">
     <link rel="stylesheet" href="{{ asset('assets/pwa.css') }}?v={{ $assetVersion }}">
 </head>
 <body class="login-page">
     <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
-    <main id="main-content" class="login-shell">
+    <main id="main-content" class="login-shell" tabindex="-1">
         <section class="login-visual">
             <div class="brand brand-light"><span class="brand-mark">H</span><span>Helpdesk</span></div>
             <div class="hero-copy">
@@ -63,6 +63,7 @@
             <button type="button" data-pwa-dismiss aria-label="Tutup pemberitahuan">&times;</button>
         </div>
     </aside>
+    <script src="{{ asset('assets/ui-accessibility.js') }}?v={{ $assetVersion }}"></script>
     <script src="{{ asset('assets/app.js') }}?v={{ $assetVersion }}"></script>
     <script src="{{ asset('assets/pwa.js') }}?v={{ $assetVersion }}"></script>
 </body>

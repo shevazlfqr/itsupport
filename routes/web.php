@@ -39,6 +39,8 @@ Route::middleware(['auth', 'active-account'])->group(function (): void {
 
 Route::match(['get', 'post'], '/index.php', function (Request $request) {
     if ($request->isMethod('get')) {
+        abort_if($request->query->has('action'), 405, 'Legacy actions require POST.');
+
         if ($request->input('api') === 'updates') {
             abort_unless($request->user(), 401);
 

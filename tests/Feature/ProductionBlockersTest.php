@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Activity;
 use App\Models\Attachment;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\TicketService;
 use App\Services\UserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -67,6 +69,63 @@ class ProductionBlockersTest extends TestCase
             'attachment' => $attachments->first()->id,
             'download' => 1,
         ]), false);
+    }
+
+    public function test_upload_rejects_oversized_and_disallowed_files_without_creating_a_ticket(): void
+    {
+        $requester = $this->account();
+        $payload = [
+            'subject' => 'Printer cannot connect',
+            'description' => 'The shared printer no longer connects from my laptop.',
+            'category' => 'Perangkat',
+            'priority' => 'medium',
+        ];
+
+        $this->actingAs($requester)->post(route('tickets.store'), $payload + [
+            'screenshots' => [UploadedFile::fake()->image('oversized.png')->size(10241)],
+        ])->assertSessionHasErrors('screenshots.0');
+
+        $this->post(route('tickets.store'), $payload + [
+            'screenshots' => [UploadedFile::fake()->create('report.txt', 1, 'text/plain')],
+        ])->assertSessionHasErrors('screenshots.0');
+
+        Auth::logout();
+        $this->post(route('tickets.store'), $payload + [
+            'screenshots' => [UploadedFile::fake()->image('screenshot.png')],
+        ])->assertRedirect('/login');
+
+        $this->assertDatabaseCount('tickets', 0);
+        $this->assertDatabaseCount('attachments', 0);
+        $this->assertSame([], Storage::disk('ticket_attachments')->allFiles('uploads'));
+    }
+
+    public function test_uploaded_file_is_removed_if_activity_write_rolls_back_ticket_creation(): void
+    {
+        $requester = $this->account();
+        $failActivity = true;
+        Activity::creating(function () use (&$failActivity): void {
+            if ($failActivity) {
+                throw new \RuntimeException('Test activity write failure');
+            }
+        });
+
+        try {
+            app(TicketService::class)->create($requester, [
+                'subject' => 'Printer cannot connect',
+                'description' => 'The shared printer no longer connects from my laptop.',
+                'category' => 'Perangkat',
+                'priority' => 'medium',
+            ], [UploadedFile::fake()->image('screenshot.png')]);
+            $this->fail('The injected activity failure must abort ticket creation.');
+        } catch (\RuntimeException $error) {
+            $this->assertSame('Test activity write failure', $error->getMessage());
+        } finally {
+            $failActivity = false;
+        }
+
+        $this->assertDatabaseCount('tickets', 0);
+        $this->assertDatabaseCount('attachments', 0);
+        $this->assertSame([], Storage::disk('ticket_attachments')->allFiles('uploads'));
     }
 
     public function test_attachment_download_checks_ticket_access_for_owner_it_admin_and_guest(): void

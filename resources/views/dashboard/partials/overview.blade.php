@@ -79,9 +79,9 @@ endforeach; ?></div></article></div></section><?php endif; ?>
     $user["role"] === "it"
 ): ?><div class="ticket-tabs"><a class="<?= !$mine
     ? "active"
-    : "" ?>" href="index.php?view=tickets">Semua Ticket</a><a class="<?= $mine
+    : "" ?>" href="index.php?view=tickets" <?= !$mine ? 'aria-current="page"' : "" ?>>Semua Ticket</a><a class="<?= $mine
     ? "active"
-    : "" ?>" href="index.php?view=tickets&amp;mine=1">Ticket Saya</a></div><?php endif; ?>
+    : "" ?>" href="index.php?view=tickets&amp;mine=1" <?= $mine ? 'aria-current="page"' : "" ?>>Ticket Saya</a></div><?php endif; ?>
 <?php if ($view === "dashboard" && $user["role"] === "employee"): ?><section class="role-focus role-focus-requester" aria-labelledby="requester-status-title"><header class="role-focus-header"><div><span class="eyebrow dark">MY TICKETS</span><h2 id="requester-status-title">Status ticket kamu</h2><p>Pantau ticket terbaru dan tindak lanjut dari tim IT.</p></div><a class="btn primary compact" href="index.php?view=new">Buat ticket</a></header><div class="role-focus-metrics"><div><strong><?= $counts[
     "new"
 ] + $counts[
@@ -130,16 +130,16 @@ endforeach; ?></div></article></div></section><?php endif; ?>
     ? "Daftar Ticket"
     : "Ticket Terbaru" ?></h2><p><?= count(
     $filtered,
-) ?> ticket ditemukan</p></div><form class="filters" method="get"><input type="hidden" name="view" value="tickets"><div class="search"><span aria-hidden="true"></span><input name="q" value="<?= e(
+) ?> ticket ditemukan</p></div><form action="<?= e(route('dashboard')) ?>" class="filters" method="get"><input type="hidden" name="view" value="tickets"><?php if ($mine): ?><input type="hidden" name="mine" value="1"><?php endif; ?><div class="search"><span aria-hidden="true"></span><input name="q" value="<?= e(
      $search,
- ) ?>" placeholder="Cari ticket..." aria-label="Cari ticket berdasarkan judul, nomor, deskripsi, atau pelapor"></div><select name="status" aria-label="Saring berdasarkan status" onchange="this.form.submit()"><option value="">Semua status</option><?php foreach (
+ ) ?>" placeholder="Cari ticket..." aria-label="Cari ticket berdasarkan judul, nomor, deskripsi, atau pelapor"><button class="btn primary compact filter-submit" type="submit">Cari</button></div><select name="status" aria-label="Saring berdasarkan status" onchange="this.form.submit()"><option value="">Semua status</option><?php foreach (
     STATUSES
     as $k => $v
 ): ?><option value="<?= $k ?>" <?= $statusFilter === $k
     ? "selected"
     : "" ?>><?= e(
     $v,
-) ?></option><?php endforeach; ?></select><select name="priority" aria-label="Saring berdasarkan prioritas" onchange="this.form.submit()"><option value="">Semua prioritas</option><?php foreach (PRIORITIES as $k => $v): ?><option value="<?= $k ?>" <?= $priorityFilter === $k ? "selected" : "" ?>><?= e($v) ?></option><?php endforeach; ?></select><select name="category" aria-label="Saring berdasarkan kategori" onchange="this.form.submit()"><option value="">Semua kategori</option><?php foreach (CATEGORIES as $cat): ?><option value="<?= e($cat) ?>" <?= $categoryFilter === $cat ? "selected" : "" ?>><?= e($cat) ?></option><?php endforeach; ?></select><input type="date" name="date_from" value="<?= e($dateFrom) ?>" title="Dari tanggal" onchange="this.form.submit()"><input type="date" name="date_to" value="<?= e($dateTo) ?>" title="Sampai tanggal" onchange="this.form.submit()"><?php if ($search || $statusFilter || $priorityFilter || $categoryFilter || $dateFrom || $dateTo): ?><a class="btn-reset-filter" href="index.php?view=tickets<?= $mine ? '&mine=1' : '' ?>">Reset filter</a><?php endif; ?><?php if (in_array($user["role"], ["it","admin"], true)): ?><a class="btn light compact" href="<?= e('index.php?' . http_build_query(array_filter(['view'=>'tickets','export'=>'csv','q'=>$search,'status'=>$statusFilter,'priority'=>$priorityFilter,'category'=>$categoryFilter,'date_from'=>$dateFrom,'date_to'=>$dateTo,'mine'=>$mine ? '1' : null]))) ?>" title="Unduh daftar ticket dalam CSV">Unduh CSV</a><?php endif; ?></form></div><div class="table-wrap" <?= !$filtered ? "hidden" : "" ?>><table><thead><tr><th>TICKET</th><th>KATEGORI</th><th>PRIORITAS</th><th>STATUS</th><th>SLA</th><th>DITANGANI</th><th>UPDATE</th><th></th></tr></thead><tbody><?php
+) ?></option><?php endforeach; ?></select><select name="priority" aria-label="Saring berdasarkan prioritas" onchange="this.form.submit()"><option value="">Semua prioritas</option><?php foreach (PRIORITIES as $k => $v): ?><option value="<?= $k ?>" <?= $priorityFilter === $k ? "selected" : "" ?>><?= e($v) ?></option><?php endforeach; ?></select><select name="category" aria-label="Saring berdasarkan kategori" onchange="this.form.submit()"><option value="">Semua kategori</option><?php foreach (CATEGORIES as $cat): ?><option value="<?= e($cat) ?>" <?= $categoryFilter === $cat ? "selected" : "" ?>><?= e($cat) ?></option><?php endforeach; ?></select><input type="date" name="date_from" value="<?= e($dateFrom) ?>" title="Dari tanggal" onchange="this.form.submit()"><input type="date" name="date_to" value="<?= e($dateTo) ?>" title="Sampai tanggal" onchange="this.form.submit()"><?php if ($search || $statusFilter || $priorityFilter || $categoryFilter || $dateFrom || $dateTo): ?><a class="btn-reset-filter" href="index.php?view=tickets<?= $mine ? '&mine=1' : '' ?>">Reset filter</a><?php endif; ?><?php if (in_array($user["role"], ["it","admin"], true)): ?><a class="btn light compact" href="<?= e(route('tickets.export', array_filter(['type'=>'tickets','q'=>$search,'status'=>$statusFilter,'priority'=>$priorityFilter,'category'=>$categoryFilter,'date_from'=>$dateFrom,'date_to'=>$dateTo,'mine'=>$mine ? '1' : null], static fn ($value) => strlen((string) $value) > 0))) ?>" title="Unduh daftar ticket dalam CSV">Unduh CSV</a><?php endif; ?></form></div><div class="table-wrap" <?= !$filtered ? "hidden" : "" ?>><table><thead><tr><th>TICKET</th><th>KATEGORI</th><th>PRIORITAS</th><th>STATUS</th><th>SLA</th><th>DITANGANI</th><th>UPDATE</th><th></th></tr></thead><tbody><?php
 foreach (array_slice($filtered, 0, $view === "dashboard" ? 5 : null) as $t):
     $assignee = userById(
         $data,

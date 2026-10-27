@@ -20,38 +20,40 @@ class TicketService
 
     public function create(User $requester, array $attributes, array $files = []): Ticket
     {
-        return DB::transaction(function () use ($requester, $attributes, $files): Ticket {
-            $eventTime = now('UTC')->startOfSecond();
-            $now = $eventTime->copy()->setTimezone(config('app.timezone'));
-            $ticket = Ticket::create([
-                'subject' => trim($attributes['subject']),
-                'description' => trim($attributes['description']),
-                'category' => $attributes['category'],
-                'priority' => $attributes['priority'],
-                'status' => 'new',
-                'requester_id' => $requester->id,
-                'assignee_id' => null,
-                'resolution_note' => '',
-                'created_at' => $now,
-                'updated_at' => $now,
-                'sla_deadline' => $this->slaDeadline($now, $attributes['priority']),
-            ]);
+        $storedFiles = [];
 
-            $this->eventRecorder->record(
-                $ticket,
-                'ticket.created',
-                'ticket.created',
-                $requester,
-                'ticket.create',
-                $eventTime,
-                [
-                    'to_status' => 'new',
-                    'to_priority' => $attributes['priority'],
-                ],
-            );
+        try {
+            return DB::transaction(function () use ($requester, $attributes, $files, &$storedFiles): Ticket {
+                $eventTime = now('UTC')->startOfSecond();
+                $now = $eventTime->copy()->setTimezone(config('app.timezone'));
+                $ticket = Ticket::create([
+                    'subject' => trim($attributes['subject']),
+                    'description' => trim($attributes['description']),
+                    'category' => $attributes['category'],
+                    'priority' => $attributes['priority'],
+                    'status' => 'new',
+                    'requester_id' => $requester->id,
+                    'assignee_id' => null,
+                    'resolution_note' => '',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                    'sla_deadline' => $this->slaDeadline($now, $attributes['priority']),
+                ]);
 
-            $storedFiles = $this->storeFiles($files);
-            try {
+                $this->eventRecorder->record(
+                    $ticket,
+                    'ticket.created',
+                    'ticket.created',
+                    $requester,
+                    'ticket.create',
+                    $eventTime,
+                    [
+                        'to_status' => 'new',
+                        'to_priority' => $attributes['priority'],
+                    ],
+                );
+
+                $storedFiles = $this->storeFiles($files);
                 foreach ($storedFiles as $file) {
                     $ticket->attachments()->create([
                         'user_id' => $requester->id,
@@ -59,17 +61,18 @@ class TicketService
                         'created_at' => $now,
                     ]);
                 }
-            } catch (\Throwable $error) {
-                foreach ($storedFiles as $file) {
-                    Storage::disk($file['disk'])->delete('uploads/'.$file['stored_name']);
-                }
-                throw $error;
+
+                $this->activity($ticket, $requester, 'Ticket dibuat', $now);
+
+                return $ticket->fresh();
+            });
+        } catch (\Throwable $error) {
+            foreach ($storedFiles as $file) {
+                Storage::disk($file['disk'])->delete('uploads/'.$file['stored_name']);
             }
 
-            $this->activity($ticket, $requester, 'Ticket dibuat', $now);
-
-            return $ticket->fresh();
-        });
+            throw $error;
+        }
     }
 
     public function addComment(Ticket $ticket, User $user, string $message): Comment
@@ -340,9 +343,14 @@ class TicketService
 
     public function markAsRead(Ticket $ticket, User $user, $at = null): void
     {
-        TicketRead::query()->updateOrCreate(
-            ['ticket_id' => $ticket->id, 'user_id' => $user->id],
-            ['last_read_at' => $at ?: now()],
+        TicketRead::query()->upsert(
+            [[
+                'ticket_id' => $ticket->id,
+                'user_id' => $user->id,
+                'last_read_at' => $at ?: now(),
+            ]],
+            ['ticket_id', 'user_id'],
+            ['last_read_at'],
         );
     }
 

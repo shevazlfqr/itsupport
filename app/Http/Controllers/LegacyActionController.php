@@ -24,6 +24,8 @@ class LegacyActionController extends Controller
 
     public function __invoke(Request $request)
     {
+        abort_unless($request->isMethod('post'), 405, 'Legacy actions require POST.');
+
         $action = $request->string('action')->toString();
 
         if ($action === 'login') {

@@ -18,4 +18,15 @@ class LoginRequest extends FormRequest
             'password' => ['required', 'string'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'Email kantor wajib diisi.',
+            'email.email' => 'Masukkan email kantor yang valid.',
+            'email.max' => 'Email kantor maksimal 120 karakter.',
+            'password.required' => 'Password wajib diisi.',
+            'password.string' => 'Password harus berupa teks.',
+        ];
+    }
 }

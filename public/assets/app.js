@@ -982,7 +982,7 @@ if (userDirectory) {
   });
   const filters = document.createElement("div");
   filters.className = "user-state-filters";
-  filters.innerHTML = `<button class="active" type="button" data-state="all">Semua <b>${rows.length}</b></button><button type="button" data-state="active">Aktif <b>${activeCount}</b></button><button type="button" data-state="inactive">Nonaktif <b>${inactiveCount}</b></button>`;
+  filters.innerHTML = `<button class="active" type="button" data-state="all" aria-pressed="true">Semua <b>${rows.length}</b></button><button type="button" data-state="active" aria-pressed="false">Aktif <b>${activeCount}</b></button><button type="button" data-state="inactive" aria-pressed="false">Nonaktif <b>${inactiveCount}</b></button>`;
   userDirectory.querySelector(":scope > header")?.appendChild(filters);
   const empty = document.createElement("div");
   empty.className = "user-filter-empty";
@@ -993,7 +993,7 @@ if (userDirectory) {
   filters.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-state]");
     if (!button) return;
-    filters.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button));
+    window.HelpdeskUiAccessibility.syncToggleButtons([...filters.querySelectorAll("button[data-state]")], button);
     let visible = 0;
     rows.forEach((row) => {
       const show = button.dataset.state === "all" || row.dataset.accountState === button.dataset.state;

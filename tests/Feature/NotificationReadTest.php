@@ -16,6 +16,65 @@ class NotificationReadTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_opening_ticket_updates_existing_composite_read_record(): void
+    {
+        $employee = $this->account('employee');
+        $ticket = $this->ticket($employee, 'Ticket detail read marker');
+        $previousReadAt = now()->subHour();
+
+        TicketRead::query()->create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $employee->id,
+            'last_read_at' => $previousReadAt,
+        ]);
+
+        $this->actingAs($employee)
+            ->followingRedirects()
+            ->get(route('tickets.show', $ticket))
+            ->assertOk()
+            ->assertSee($ticket->subject);
+
+        $read = TicketRead::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('user_id', $employee->id)
+            ->firstOrFail();
+
+        $this->assertTrue($read->last_read_at->greaterThan($previousReadAt));
+        $this->assertSame(1, TicketRead::query()->count());
+    }
+
+    public function test_comment_is_saved_and_existing_composite_read_record_is_updated(): void
+    {
+        $employee = $this->account('employee');
+        $ticket = $this->ticket($employee, 'Ticket comment read marker');
+        $previousReadAt = now()->subHour();
+        $message = 'Informasi tambahan untuk pengecekan tiket.';
+
+        TicketRead::query()->create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $employee->id,
+            'last_read_at' => $previousReadAt,
+        ]);
+
+        $this->actingAs($employee)
+            ->post(route('tickets.comments.store', $ticket), ['message' => $message])
+            ->assertRedirect(route('tickets.show', $ticket));
+
+        $this->assertDatabaseHas('comments', [
+            'ticket_id' => $ticket->id,
+            'user_id' => $employee->id,
+            'message' => $message,
+        ]);
+
+        $read = TicketRead::query()
+            ->where('ticket_id', $ticket->id)
+            ->where('user_id', $employee->id)
+            ->firstOrFail();
+
+        $this->assertTrue($read->last_read_at->greaterThan($previousReadAt));
+        $this->assertSame(1, TicketRead::query()->count());
+    }
+
     public function test_employee_can_mark_all_notifications_read_only_for_tickets_they_can_view(): void
     {
         $employee = $this->account('employee');

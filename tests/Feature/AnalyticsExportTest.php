@@ -472,15 +472,85 @@ class AnalyticsExportTest extends TestCase
         $response->assertSee(route('tickets.export', ['type' => 'statistics', 'range' => 7, 'view' => 'analytics']));
     }
 
-    public function test_ticket_list_export_link_preserves_the_mine_scope(): void
+    public function test_ticket_list_export_uses_download_route_and_preserves_active_filters(): void
     {
         $it = $this->account('it');
+        $requester = $this->account('employee');
+        $this->ticket($requester, [
+            'subject' => 'QA printer export target',
+            'assignee_id' => $it->id,
+        ]);
+        $this->ticket($requester, [
+            'subject' => 'QA monitor export unrelated',
+            'description' => 'The display is unavailable.',
+            'assignee_id' => $it->id,
+        ]);
 
+        $filters = [
+            'type' => 'tickets',
+            'q' => 'printer',
+            'status' => 'new',
+            'priority' => 'medium',
+            'category' => 'Perangkat',
+            'mine' => '1',
+        ];
+        $expectedUrl = route('tickets.export', $filters);
         $response = $this->actingAs($it)
-            ->get(route('dashboard', ['view' => 'tickets', 'mine' => 1]))
+            ->get(route('dashboard', [
+                'view' => 'tickets',
+                ...$filters,
+            ]))
             ->assertOk();
 
-        $this->assertMatchesRegularExpression('/href="[^"]*export=csv[^"]*mine=1[^"]*"/', $response->getContent());
+        $this->assertSame(
+            1,
+            preg_match('/<a class="btn light compact" href="([^"]+)" title="Unduh daftar ticket dalam CSV">/', $response->getContent(), $matches),
+        );
+        $downloadUrl = html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5);
+        $this->assertSame($expectedUrl, $downloadUrl);
+        $this->assertStringNotContainsString('index.php?view=tickets&amp;export=csv', $response->getContent());
+
+        $download = $this->get($downloadUrl)
+            ->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('attachment;', (string) $download->headers->get('content-disposition'));
+
+        $rows = $this->csvRows($download->streamedContent());
+        $subjects = array_column(array_slice($rows, 1), 1);
+        $this->assertSame(['QA printer export target'], $subjects);
+    }
+
+    public function test_ticket_search_form_submits_query_and_keeps_active_filters(): void
+    {
+        $it = $this->account('it');
+        $requester = $this->account('employee');
+        $this->ticket($requester, [
+            'subject' => 'QA printer search target',
+            'assignee_id' => $it->id,
+        ]);
+        $this->ticket($requester, [
+            'subject' => 'QA monitor search unrelated',
+            'description' => 'The display is unavailable.',
+            'assignee_id' => $it->id,
+        ]);
+
+        $response = $this->actingAs($it)
+            ->get(route('dashboard', [
+                'view' => 'tickets',
+                'mine' => '1',
+                'q' => 'printer',
+                'status' => 'new',
+                'priority' => 'medium',
+                'category' => 'Perangkat',
+            ]))
+            ->assertOk();
+
+        $response->assertSee('name="q"', false);
+        $response->assertSee('name="mine" value="1"', false);
+        $response->assertSee('class="btn primary compact filter-submit" type="submit">Cari</button>', false);
+        $response->assertSee('value="printer"', false);
+        $response->assertSee('QA printer search target');
+        $response->assertDontSee('QA monitor search unrelated');
     }
 
     public function test_downloads_do_not_mutate_tickets_or_ticket_events(): void
